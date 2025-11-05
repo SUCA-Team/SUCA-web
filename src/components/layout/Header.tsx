@@ -77,6 +77,10 @@ export const Header: React.FC = () => {
               <span className="label dark">DICTIONARY</span>
               <span className="label light">DICTIONARY</span>
             </NavLink>
+            <NavLink to="/translate" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
+              <span className="label dark">TRANSLATE</span>
+              <span className="label light">TRANSLATE</span>
+            </NavLink>
             <NavLink to="/flashcard" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
               <span className="label dark">FLASHCARD</span>
               <span className="label light">FLASHCARD</span>

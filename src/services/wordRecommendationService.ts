@@ -1,5 +1,5 @@
-import axios from 'axios';
 import type { WordSuggestion } from '../types/translation';
+import ApiService, { type SearchResponse } from './apiService';
 
 // Mock Japanese vocabulary database
 const mockVocabulary: WordSuggestion[] = [
@@ -223,15 +223,13 @@ export class WordRecommendationService {
    * Send the final query to the backend. This should only be called when user presses Enter.
    * Returns backend response or null if no backend is configured or the call failed.
    */
-  async searchBackend(query: string): Promise<unknown | null> {
+  async searchBackend(query: string): Promise<SearchResponse | null> {
     if (!query.trim()) return null;
 
-    const apiBase = (import.meta as unknown as { env?: { VITE_API_BASE?: string } }).env?.VITE_API_BASE;
-    if (!apiBase) return null;
-
     try {
-      const resp = await axios.get(`${apiBase.replace(/\/$/, '')}/search`, { params: { q: query } });
-      return resp.data;
+      const apiService = ApiService.getInstance();
+      const response = await apiService.searchDictionary(query);
+      return response;
     } catch (err) {
       console.warn('Backend search failed:', err);
       return null;

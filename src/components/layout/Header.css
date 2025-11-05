@@ -20,7 +20,8 @@
 }
 
 .logo-text {
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Playpen Sans';
+  src: url('../assets/PlaypenSans-ExtraBold.ttf') format('truetype');
   font-weight: 800;
   font-size: 28px;
   color: #c8102e; /* SUCA red */
