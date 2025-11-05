@@ -1,0 +1,28 @@
+.home-page {
+  min-height: 100vh;
+  background: none;
+  overflow-x: hidden;
+  width: 100%;
+}
+
+.main-content {
+  margin: 0;
+  padding: 0;
+}
+
+.body-image {
+  width: 100vw;
+  margin: 0;
+}
+.body-image.full-width img {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+
+/* Remove any default margins around header/footer */
+.header, .site-footer {
+  margin: 0;
+}
+

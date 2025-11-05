@@ -1,0 +1,120 @@
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  width: 100%;
+}
+
+.page {
+  flex: 1;
+  padding: 3rem 0;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.page-content {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* horizontally center children */
+  text-align: center;  /* center text inside the content area */
+}
+
+.page-title {
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.page-body {
+  font-size: 1.1rem;
+  line-height: 1.7;
+}
+
+.page-body h2 {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 2.5rem 0 1rem 0;
+}
+
+.page-body p {
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+}
+
+.lead {
+  font-size: 1.3rem !important;
+  font-weight: 500;
+  color: var(--text-primary) !important;
+  text-align: center;
+  margin-bottom: 3rem !important;
+}
+
+.page-body ul {
+  color: var(--text-secondary);
+  padding-left: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.page-body li {
+  margin-bottom: 0.75rem;
+}
+
+.features-list {
+  display: grid;
+  gap: 2.5rem;
+  margin-top: 3rem;
+}
+
+.feature-item {
+  padding: 2rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  transition: all var(--transition-duration);
+}
+
+.feature-item:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+  border-color: var(--accent-primary);
+}
+
+.feature-item h2 {
+  font-size: 1.5rem !important;
+  margin: 0 0 1rem 0 !important;
+  color: var(--text-primary);
+}
+
+.feature-item p {
+  margin-bottom: 0 !important;
+  font-size: 1rem;
+}
+
+@media (max-width: 768px) {
+  .page {
+    padding: 2rem 0;
+  }
+  
+  .page-title {
+    font-size: 2.5rem;
+  }
+  
+  .page-body {
+    font-size: 1rem;
+  }
+  
+  .lead {
+    font-size: 1.2rem !important;
+  }
+  
+  .feature-item {
+    padding: 1.5rem;
+  }
+}

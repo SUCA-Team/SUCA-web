@@ -1,0 +1,147 @@
+.header {
+  background-color: #ffffff;
+  border-bottom: 1px solid #f0f0f0;
+  padding:16px;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+.header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1200px;
+  margin: 0 auto;
+  gap: 1rem;
+}
+
+.logo {
+  text-decoration: none;
+}
+
+.logo-text {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 800;
+  font-size: 28px;
+  color: #c8102e; /* SUCA red */
+}
+
+.center-nav {
+  display: flex;
+  gap: 48px;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 auto;
+}
+
+.center-nav { position: relative; }
+
+.nav-link {
+  position: relative;
+  text-decoration: none;
+  color: #111111;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 8px 14px;
+  border-radius: 18px;
+  overflow: visible;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-link:hover {
+  opacity: 1
+}
+
+.nav-link.active {
+  color: transparent; /* hide the dark label when active, light label will show */
+}
+
+/* moving red highlight element */
+.nav-highlight {
+  position: absolute;
+  /* center vertically inside the nav container */
+  top: 50%;
+  transform: translateY(-50%);
+  /* Make the highlight match the visual header height.
+     header has vertical padding 0.75rem top + 0.75rem bottom = 1.5rem total,
+     so add that to the nav's content height (100%). This keeps the pill
+     spanning the full header area while remaining centered. */
+  height: calc(100% + 40px);
+  background: var(--accent-primary, #c8102e);
+  border-radius: 10px; /* fully rounded pill that scales with height */
+  transition: left 500ms cubic-bezier(.2,.8,.2,1), width 500ms cubic-bezier(.2,.8,.2,1), opacity 300ms ease-in;
+  z-index: 0;
+  opacity: 0;
+  pointer-events: none; /* allow clicks through the highlight */
+}
+
+/* helper class: when present, disable horizontal/size motion so we can
+   set the highlight geometry instantly before fading it in. Opacity still
+   transitions so the element fades in/out as desired. */
+.nav-highlight.disable-motion {
+  transition: left 0ms linear, width 0ms linear, opacity 0ms ease-out;
+}
+
+.nav-highlight.visible { opacity: 1; }
+
+/* label layers: dark (default), light (white) */
+.label {
+  position: relative;
+  display: inline-block;
+  line-height: 1;
+  z-index: 1;
+}
+.label.dark,
+.label.light {
+  display: inline-block;
+  width: 100%;
+  text-align: center;
+  line-height: 1;
+  transition: transform 400ms ease, opacity 400ms ease-in-out;
+}
+
+.label.dark {
+  color: #111111;
+}
+
+.label.light {
+  position: absolute;
+  left: 0; right: 0; top: 0;
+  color: #fff;
+  opacity: 0;
+  transform: translateY;
+}
+
+/* Active state animations: dark label moves down and fades, light label moves into center */
+.nav-link.active .label.dark {
+  opacity: 0;
+  transform: translateY(8px);
+}
+.nav-link.active .label.light {
+  opacity: 1;
+  transform: translateY(8px);
+}
+
+.right {
+  display: flex;
+  align-items: center;
+}
+
+.login-btn {
+  background-color: #c8102e;
+  color: #ffffff;
+  padding: 10px 20px;
+  border-radius: 20px;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+@media (max-width: 900px) {
+  .center-nav {
+    gap: 16px;
+  }
+  .logo-text { font-size: 22px; }
+  .login-btn { padding: 8px 14px; }
+}
