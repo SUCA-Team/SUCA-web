@@ -20,7 +20,8 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+// initialize analytics if available; don't keep an unused binding to avoid build errors
+void getAnalytics(app);
 
 // Validate that required environment variables are present
 const requiredEnvVars = {
@@ -30,8 +31,8 @@ const requiredEnvVars = {
 };
 
 const missingEnvVars = Object.entries(requiredEnvVars)
-  .filter(([_, value]) => !value)
-  .map(([key, _]) => `VITE_FIREBASE_${key.toUpperCase()}`);
+  .filter(([, value]) => !value)
+  .map(([key]) => `VITE_FIREBASE_${key.toUpperCase()}`);
 
 if (missingEnvVars.length > 0) {
   console.error('Missing required Firebase environment variables:', missingEnvVars.join(', '));

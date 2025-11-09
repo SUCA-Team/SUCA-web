@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { NavLink, Link, useLocation } from 'react-router-dom';
+import { NavLink, Link, useLocation, useNavigate } from 'react-router-dom';
 import './Header.css';
 import LoginModal from '../../components/common/LoginModal';
+import useAuth from '../../hooks/useAuth';
+import { signOutUser } from '../../firebase';
 
 export const Header: React.FC = () => {
   const [open, setOpen] = useState(false);
@@ -10,6 +12,9 @@ export const Header: React.FC = () => {
   const location = useLocation();
   const [highlightStyle, setHighlightStyle] = useState({ left: 0, width: 0 });
   const [highlightVisible, setHighlightVisible] = useState(false);
+  const auth = useAuth();
+  const user = auth?.user ?? null;
+  const navigate = useNavigate();
 
   useEffect(() => {
     let hideTimer: number | undefined;
@@ -62,7 +67,7 @@ export const Header: React.FC = () => {
   return (
     <>
       <header className="header">
-        <div className="header-inner">
+        <div className="header-inner container">
           <div className="left">
             <Link to="/" className="logo" onClick={() => {
 
@@ -92,7 +97,35 @@ export const Header: React.FC = () => {
           </nav>
 
           <div className="right">
-            <button className="login-btn" onClick={() => setOpen(true)}>LOG IN</button>
+            {user ? (
+              (() => {
+                const display = user.displayName || user.email || 'User';
+                return (
+                  <div className="user-chip" title={display}>
+                    <img className="avatar" src={user.photoURL ?? undefined} alt={display ?? 'User avatar'} />
+                    <span className="gname">{(display || '').split(' ')[0]}</span>
+                    <button
+                      className="signout-btn"
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        try {
+                          await signOutUser();
+                          // after signing out, navigate back to homepage
+                          navigate('/');
+                        } catch (err) {
+                          console.error('Sign out failed', err);
+                        }
+                      }}
+                      aria-label="Sign out"
+                    >
+                      <img src="src\\assets\\LogoutLogo.png" alt="logout.png"/>
+                    </button>
+                  </div>
+                );
+              })()
+            ) : (
+              <button className="login-btn" onClick={() => setOpen(true)}>LOG IN</button>
+            )}
           </div>
         </div>
       </header>

@@ -2,15 +2,18 @@
   background: #b9092a;
   color: #fff;
   padding-top: 0px;
+  max-width: 100%;
 }
 .footer-top {
   display: flex;
-  gap: 150px;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 0px 0px;
+  justify-content: space-between;
+  gap: 80px;
+  max-width: 100%;
+  margin-left: 10%;
 }
-.footer-column { flex: 1; }
+.footer-column { 
+  flex: 1; 
+  min-width: 150px;}
 .footer-column h4 { text-transform: uppercase; margin-bottom: 12px; }
 .footer-link {
   display: block;

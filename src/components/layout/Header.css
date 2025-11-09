@@ -1,19 +1,21 @@
 .header {
   background-color: #ffffff;
   border-bottom: 1px solid #f0f0f0;
-  padding:16px;
+  padding:8px;
   position: sticky;
   top: 0;
   z-index: 1000;
+  max-width: auto;
 }
 .header-inner {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  max-width: 1200px;
-  margin: 0 auto;
+  width: 100%;
   gap: 1rem;
+  padding-left: 5%;
 }
+
 
 .logo {
   text-decoration: none;
@@ -23,7 +25,7 @@
   font-family: 'Playpen Sans';
   src: url('../assets/PlaypenSans-ExtraBold.ttf') format('truetype');
   font-weight: 800;
-  font-size: 28px;
+  font-size: 45px;
   color: #c8102e; /* SUCA red */
 }
 
@@ -33,6 +35,7 @@
   align-items: center;
   justify-content: center;
   flex: 1 1 auto;
+
 }
 
 .center-nav { position: relative; }
@@ -128,6 +131,8 @@
 .right {
   display: flex;
   align-items: center;
+  width: 100px;
+  margin-right: 5%;
 }
 
 .login-btn {
@@ -137,6 +142,48 @@
   border-radius: 20px;
   text-decoration: none;
   font-weight: 700;
+  width: 100%;
+  height: 100%;
+}
+
+.user-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border-radius: 20px;
+  padding: 4px 8px;
+}
+.user-chip .avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(0,0,0,0.08);
+}
+.user-chip .gname {
+  font-weight: 500;
+  color: #111111;
+  font-size: 30px;
+}
+.user-chip .signout-btn {
+  margin-left: 6px;
+  background: transparent;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  font-size: 14px;
+}
+.user-chip .signout-btn:hover { color: #111; }
+
+/* Logout logo sizing: use a CSS variable so it's easy to tweak. Default to 20px. */
+.user-chip .signout-btn img {
+  margin-top: 17%;
+  --logout-size: 35px;
+  width: var(--logout-size);
+  height: var(--logout-size);
+  display: inline-block;
+  object-fit: contain;
 }
 
 @media (max-width: 900px) {
