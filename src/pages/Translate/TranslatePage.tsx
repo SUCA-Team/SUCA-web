@@ -23,31 +23,26 @@ export const TranslatePage: React.FC = () => {
       <div className="page-content">
         <h1 className="page-title">Translation</h1>
         <p className="page-body">Translate between English and Japanese.</p>
-        
-        <form onSubmit={handleSubmit} style={{ marginTop: '2rem', maxWidth: '600px' }}>
-          <div style={{ marginBottom: '1rem' }}>
-            <label htmlFor="direction" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+
+        <form onSubmit={handleSubmit}>
+          <div>
+            <label htmlFor="direction" className="label">
               Translation Direction:
             </label>
-            <select
-              id="direction"
-              value={direction}
-              onChange={(e) => setDirection(e.target.value as typeof direction)}
-              style={{
-                padding: '0.5rem',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                fontSize: '1rem'
-              }}
-            >
+              <select
+                id="direction"
+                value={direction}
+                onChange={(e) => setDirection(e.target.value as typeof direction)}
+                style={{ color: 'var(--text-secondary)' }}
+              >
               <option value="auto">Auto-detect</option>
               <option value="en-to-jp">English → Japanese</option>
               <option value="jp-to-en">Japanese → English</option>
             </select>
           </div>
-          
-          <div style={{ marginBottom: '1rem' }}>
-            <label htmlFor="input-text" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+
+          <div>
+            <label htmlFor="input-text" className="label">
               Text to translate:
             </label>
             <textarea
@@ -55,114 +50,58 @@ export const TranslatePage: React.FC = () => {
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               placeholder="Enter text to translate..."
-              rows={4}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                fontSize: '1rem',
-                resize: 'vertical'
-              }}
+              rows={2}
             />
           </div>
-          
-          <div style={{ display: 'flex', gap: '1rem' }}>
+
+          <div className="button-row">
             <button
               type="submit"
               disabled={isLoading || !inputText.trim()}
-              style={{
-                padding: '0.75rem 1.5rem',
-                backgroundColor: '#2196F3',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                fontSize: '1rem',
-                cursor: inputText.trim() && !isLoading ? 'pointer' : 'not-allowed',
-                opacity: inputText.trim() && !isLoading ? 1 : 0.6
-              }}
+              className="btn btn-primary"
+                style={{ color: 'white' }}
             >
               {isLoading ? 'Translating...' : 'Translate'}
             </button>
-            
+
             <button
               type="button"
               onClick={handleClear}
-              style={{
-                padding: '0.75rem 1.5rem',
-                backgroundColor: '#666',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                fontSize: '1rem',
-                cursor: 'pointer'
-              }}
+              className="btn btn-clear"
+                style={{ color: 'white' }}
             >
               Clear
             </button>
           </div>
         </form>
-        
+
         {error && (
-          <div style={{
-            marginTop: '1.5rem',
-            padding: '1rem',
-            backgroundColor: '#ffebee',
-            color: '#c62828',
-            border: '1px solid #ef5350',
-            borderRadius: '4px'
-          }}>
+          <div className="error-box">
             <strong>Error:</strong> {error}
           </div>
         )}
-        
+
         {result && (
-          <div style={{
-            marginTop: '1.5rem',
-            padding: '1.5rem',
-            backgroundColor: '#f5f5f5',
-            border: '1px solid #ddd',
-            borderRadius: '8px'
-          }}>
-            <h3 style={{ margin: '0 0 1rem 0' }}>Translation Result</h3>
-            
+          <div className="result-card">
+            <h3 className="result-title">Translation Result</h3>
+
             {result.notification && (
-              <div style={{
-                padding: '0.75rem',
-                backgroundColor: '#fff3cd',
-                color: '#856404',
-                border: '1px solid #ffeaa7',
-                borderRadius: '4px',
-                marginBottom: '1rem'
-              }}>
+              <div className="result-notice">
                 {result.notification}
               </div>
             )}
-            
-            <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: '1fr 1fr' }}>
+
+            <div className="result-grid">
               <div>
-                <h4 style={{ margin: '0 0 0.5rem 0', color: '#666' }}>Original:</h4>
-                <div style={{
-                  padding: '0.75rem',
-                  backgroundColor: 'white',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  fontSize: '1.1rem'
-                }}>
+                <h4 className="result-subtitle">Original:</h4>
+                <div className="result-box">
                   {result.original}
                 </div>
               </div>
-              
+
               <div>
-                <h4 style={{ margin: '0 0 0.5rem 0', color: '#666' }}>Translation:</h4>
-                <div style={{
-                  padding: '0.75rem',
-                  backgroundColor: 'white',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  fontSize: '1.1rem',
-                  fontWeight: 'bold'
-                }}>
+                <h4 className="result-subtitle">Translation:</h4>
+                <div className="result-box result-box-strong">
                   {result.translated}
                 </div>
               </div>
