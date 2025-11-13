@@ -25,8 +25,16 @@ export interface SearchResult {
 }
 
 export interface SearchResponse {
+  /** Indicates whether the search was successful */
+  success: boolean;
+  /** Human-readable message about the search results (e.g., "Found 12 results for '綺麗'") */
+  message: string;
+  /** Array of dictionary search results */
   results: SearchResult[];
+  /** Total number of results found */
   total_count: number;
+  /** The original search query */
+  query: string;
 }
 
 export interface HealthResponse {

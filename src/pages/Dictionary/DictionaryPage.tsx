@@ -16,10 +16,19 @@ export const DictionaryPage: React.FC = () => {
     try {
       const apiService = ApiService.getInstance();
       const results = await apiService.searchDictionary(text);
+      
+      // Handle the new API response structure
+      if (!results.success) {
+        setError(results.message || 'Search failed');
+        setSearchResults(null);
+        return;
+      }
+      
       setSearchResults(results);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Search failed');
       console.error('Dictionary search error:', err);
+      setSearchResults(null);
     } finally {
       setIsLoading(false);
     }
@@ -45,9 +54,12 @@ export const DictionaryPage: React.FC = () => {
             </div>
           )}
           
-          {searchResults && searchResults.results.length > 0 && (
+          {searchResults && searchResults.success && (
             <div style={{ marginTop: '1.5rem' }}>
-              <h3>Search Results ({searchResults.total_count} found)</h3>
+              <div style={{ marginBottom: '1rem', padding: '0.5rem', background: '#e8f5e8', borderRadius: '4px', color: '#2e7d32' }}>
+                {searchResults.message}
+              </div>
+              <h3>Search Results ({searchResults.total_count} found for '{searchResults.query}')</h3>
               {searchResults.results.map((result, index) => (
                 <div key={index} style={{ 
                   margin: '1rem 0', 
@@ -117,9 +129,9 @@ export const DictionaryPage: React.FC = () => {
             </div>
           )}
           
-          {searchResults && searchResults.results.length === 0 && (
+          {searchResults && searchResults.success && searchResults.results.length === 0 && (
             <div style={{ marginTop: '1rem', padding: '1rem', textAlign: 'center', color: '#666' }}>
-              No results found. Try a different search term.
+              No results found for '{searchResults.query}'. Try a different search term.
             </div>
           )}
         </section>

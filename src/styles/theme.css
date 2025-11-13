@@ -35,7 +35,7 @@
 }
 
 /* Dark Theme */
-[data-theme="dark"] {
+/* [data-theme="dark"] {
   --bg-primary: #1a1a1a;
   --bg-secondary: #2d2d2d;
   --bg-tertiary: #404040;
@@ -51,7 +51,7 @@
   --input-focus: #ef4444;
   --suggestion-bg: #2d2d2d;
   --suggestion-hover: #404040;
-}
+} */
 
 /* Global Styles */
 * {

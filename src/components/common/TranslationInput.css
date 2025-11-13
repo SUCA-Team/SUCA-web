@@ -58,6 +58,20 @@
   padding-right: 3rem;
   font-size: 1.1rem;
   min-height: 60px;
+  /* Force white background regardless of theme */
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+.translation-input::placeholder {
+  color: #6c757d !important;
+}
+
+.translation-input:focus {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
 }
 
 .search-button {
@@ -199,12 +213,12 @@
   color: #388e3c;
 }
 
-[data-theme="dark"] .type-hiragana {
+/* [data-theme="dark"] .type-hiragana {
   background-color: #1565c0;
   color: #bbdefb;
-}
+} */
 
-[data-theme="dark"] .type-katakana {
+/* [data-theme="dark"] .type-katakana {
   background-color: #6a1b9a;
   color: #e1bee7;
 }
@@ -217,7 +231,7 @@
 [data-theme="dark"] .type-romaji {
   background-color: #2e7d32;
   color: #c8e6c9;
-}
+} */
 
 .level {
   padding: 0.2rem 0.4rem;
@@ -280,6 +294,9 @@
   .translation-input {
     font-size: 1rem;
     min-height: 50px;
+    /* Ensure white background on mobile too */
+    background-color: #ffffff !important;
+    color: #000000 !important;
   }
   
   .suggestions-dropdown {
