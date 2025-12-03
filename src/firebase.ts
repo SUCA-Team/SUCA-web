@@ -18,10 +18,25 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-// initialize analytics if available; don't keep an unused binding to avoid build errors
-void getAnalytics(app);
+// Initialize Firebase safely (allow dev without Firebase env)
+let app: ReturnType<typeof initializeApp> | null = null;
+try {
+  if (firebaseConfig.apiKey && firebaseConfig.authDomain && firebaseConfig.projectId) {
+    app = initializeApp(firebaseConfig);
+    // Guard analytics for browser-only environments
+    if (typeof window !== 'undefined') {
+      try {
+        getAnalytics(app);
+      } catch (e) {
+        console.warn('Analytics init skipped:', (e as Error).message);
+      }
+    }
+  } else {
+    console.warn('Firebase config incomplete; running without Firebase.');
+  }
+} catch (e) {
+  console.warn('Firebase init failed; continuing without Firebase:', (e as Error).message);
+}
 
 // Validate that required environment variables are present
 const requiredEnvVars = {
@@ -31,21 +46,20 @@ const requiredEnvVars = {
 };
 
 const missingEnvVars = Object.entries(requiredEnvVars)
-  .filter(([, value]) => !value)
-  .map(([key]) => `VITE_FIREBASE_${key.toUpperCase()}`);
+  .filter(([_, value]) => !value)
+  .map(([key, _]) => `VITE_FIREBASE_${key.toUpperCase()}`);
 
 if (missingEnvVars.length > 0) {
   console.error('Missing required Firebase environment variables:', missingEnvVars.join(', '));
   console.error('Please check your .env file and ensure all required variables are set.');
 }
 
-const isConfigured = Boolean(firebaseConfig.apiKey && firebaseConfig.authDomain);
+const isConfigured = Boolean(firebaseConfig.apiKey && firebaseConfig.authDomain && firebaseConfig.projectId);
 
 let auth: ReturnType<typeof getAuth> | null = null;
 let googleProvider: GoogleAuthProvider | null = null;
 
-if (isConfigured) {
-  const app = initializeApp(firebaseConfig);
+if (isConfigured && app) {
   auth = getAuth(app);
   googleProvider = new GoogleAuthProvider();
 }

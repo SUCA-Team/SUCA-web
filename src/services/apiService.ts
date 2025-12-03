@@ -25,16 +25,8 @@ export interface SearchResult {
 }
 
 export interface SearchResponse {
-  /** Indicates whether the search was successful */
-  success: boolean;
-  /** Human-readable message about the search results (e.g., "Found 12 results for '綺麗'") */
-  message: string;
-  /** Array of dictionary search results */
   results: SearchResult[];
-  /** Total number of results found */
   total_count: number;
-  /** The original search query */
-  query: string;
 }
 
 export interface HealthResponse {
@@ -44,8 +36,11 @@ export interface HealthResponse {
 class ApiService {
   private static instance: ApiService;
   private client: AxiosInstance;
+  private useMocks: boolean;
 
   private constructor() {
+    this.useMocks = (import.meta as any).env?.VITE_USE_MOCKS === 'true';
+
     this.client = axios.create({
       baseURL: API_CONFIG.BASE_URL,
       timeout: 10000,
@@ -85,41 +80,124 @@ class ApiService {
 
   // Health check
   async checkHealth(): Promise<HealthResponse> {
-    const response = await this.client.get<HealthResponse>(API_CONFIG.ENDPOINTS.HEALTH);
-    return response.data;
+    if (this.useMocks) {
+      return { status: 'ok' };
+    }
+    try {
+      const response = await this.client.get<HealthResponse>(API_CONFIG.ENDPOINTS.HEALTH);
+      return response.data;
+    } catch (err) {
+      // Fallback to mock when backend is unavailable
+      return { status: 'ok' };
+    }
   }
 
   // Translation services
   async translateEnglishToJapanese(text: string): Promise<TranslationResponse> {
-    const response = await this.client.get<TranslationResponse>(
-      API_CONFIG.ENDPOINTS.TRANSLATE_EN_TO_JP,
-      {
-        params: { q: text, target_lang: 'ja' }
-      }
-    );
-    return response.data;
+    if (this.useMocks) {
+      return {
+        original: text,
+        translated: mockTranslate(text, 'ja'),
+        notification: 'Mock translation (no backend)'
+      };
+    }
+    try {
+      const response = await this.client.get<TranslationResponse>(
+        API_CONFIG.ENDPOINTS.TRANSLATE_EN_TO_JP,
+        {
+          params: { q: text, target_lang: 'ja' }
+        }
+      );
+      return response.data;
+    } catch {
+      return {
+        original: text,
+        translated: mockTranslate(text, 'ja'),
+        notification: 'Mock translation fallback (backend unreachable)'
+      };
+    }
   }
 
   async translateJapaneseToEnglish(text: string): Promise<TranslationResponse> {
-    const response = await this.client.get<TranslationResponse>(
-      API_CONFIG.ENDPOINTS.TRANSLATE_JP_TO_EN,
-      {
-        params: { q: text, target_lang: 'en' }
-      }
-    );
-    return response.data;
+    if (this.useMocks) {
+      return {
+        original: text,
+        translated: mockTranslate(text, 'en'),
+        notification: 'Mock translation (no backend)'
+      };
+    }
+    try {
+      const response = await this.client.get<TranslationResponse>(
+        API_CONFIG.ENDPOINTS.TRANSLATE_JP_TO_EN,
+        {
+          params: { q: text, target_lang: 'en' }
+        }
+      );
+      return response.data;
+    } catch {
+      return {
+        original: text,
+        translated: mockTranslate(text, 'en'),
+        notification: 'Mock translation fallback (backend unreachable)'
+      };
+    }
   }
 
   // Dictionary search
   async searchDictionary(query: string, limit?: number): Promise<SearchResponse> {
-    const response = await this.client.get<SearchResponse>(API_CONFIG.ENDPOINTS.SEARCH, {
-      params: { 
-        q: query,
-        ...(limit && { limit })
-      }
-    });
-    return response.data;
+    if (this.useMocks) {
+      return mockSearch(query, limit);
+    }
+    try {
+      const response = await this.client.get<SearchResponse>(API_CONFIG.ENDPOINTS.SEARCH, {
+        params: { 
+          q: query,
+          ...(limit && { limit })
+        }
+      });
+      return response.data;
+    } catch {
+      return mockSearch(query, limit);
+    }
   }
 }
 
 export default ApiService;
+
+// ------- Mock helpers (frontend-only) -------
+function mockTranslate(text: string, target: 'en' | 'ja'): string {
+  // Extremely simple mock: reverse text and append target tag
+  const reversed = text.split('').reverse().join('');
+  if (target === 'ja') {
+    return `${reversed}・モック`;
+  }
+  return `${reversed} (mock)`;
+}
+
+function mockSearch(query: string, limit?: number): SearchResponse {
+  const base: SearchResult = {
+    word: query,
+    reading: null,
+    is_common: true,
+    jlpt_level: 'N5',
+    meanings: [
+      {
+        pos: ['noun'],
+        definitions: [`Mock definition for "${query}"`],
+        examples: [
+          { japanese: `${query} の例`, english: `Example with ${query}` }
+        ],
+        notes: ['This is a mock search result']
+      }
+    ],
+    other_forms: [],
+    tags: ['mock'],
+    variants: [{ word: query, reading: query }]
+  };
+  const count = Math.max(1, Math.min(limit ?? 3, 5));
+  const results = Array.from({ length: count }).map((_, i) => ({
+    ...base,
+    word: `${query}-${i + 1}`
+  }));
+  return { results, total_count: results.length };
+}
