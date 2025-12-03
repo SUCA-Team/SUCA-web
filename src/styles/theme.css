@@ -104,8 +104,8 @@ body {
 }
 
 .btn-primary {
-  background-color: var(--accent-primary);
-  color: white;
+  background-color: rgb(15, 177, 0);
+  color: rgb(255, 255, 255) !important;
 }
 
 .btn-primary:hover {
@@ -190,7 +190,7 @@ body {
 .page-translate textarea {
   width: 100%;
   padding: 0.65rem 0.75rem;
-  border: 1px solid var(--border-color);
+  border: #ff1a1a75 2px solid !important;
   border-radius: 8px;
   background: var(--input-bg);
   color: var(--text-primary);
@@ -203,6 +203,7 @@ body {
 /* Make direction select's text use secondary (gray) color */
 .page-translate select {
   color: gray;
+  border: #ff1a1a7e 2px solid !important;
 }
 
 /* Focus styles: red border and subtle ring like other inputs */
@@ -218,7 +219,7 @@ body {
 /* Button variants */
 .btn-clear {
   background-color: #90caf9; /* light blue */
-  
+  color: #dee2e6;
   border: 1px solid rgba(11,37,69,0.08);
 }
 .btn-clear:hover { filter: brightness(0.95); transform: translateY(-1px); }

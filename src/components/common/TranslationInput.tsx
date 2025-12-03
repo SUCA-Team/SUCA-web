@@ -3,6 +3,7 @@ import { useWordSuggestions } from '../../hooks/useWordSuggestions';
 import { WordRecommendationService } from '../../services/wordRecommendationService';
 import type { WordSuggestion } from '../../types/translation';
 import './TranslationInput.css';
+import { convertSearchInput } from '../../utils/romajiToKana';
 
 interface TranslationInputProps {
   onTranslate?: (text: string) => void;
@@ -51,7 +52,7 @@ export const TranslationInput: React.FC<TranslationInputProps> = ({ onTranslate,
       // debounce calls so we don't request on every keystroke
       if (suggestionsTimerRef.current) clearTimeout(suggestionsTimerRef.current);
       suggestionsTimerRef.current = setTimeout(() => {
-        // call the suggestion fetcher (hook handles loading state)
+        // Use raw input for suggestions; service handles kana conversion internally
         void getSuggestions(value);
         setShowSuggestions(true);
       }, 300);
@@ -85,11 +86,14 @@ export const TranslationInput: React.FC<TranslationInputProps> = ({ onTranslate,
     setShowSuggestions(false);
     clearSuggestions();
 
+    // Convert outside quotes to kana before backend and callback
+    const finalQuery = convertSearchInput(inputValue);
+
     // Send final query to backend (if configured). We don't require a response yet,
     // but we call it now so the app is ready when your backend is connected.
     try {
       const svc = WordRecommendationService.getInstance();
-      const resp = await svc.searchBackend(inputValue);
+      const resp = await svc.searchBackend(finalQuery);
       // For now just log the response. Parent can still handle the raw input via onTranslate.
       if (resp !== null) {
         console.log('Backend search response:', resp);
@@ -99,7 +103,7 @@ export const TranslationInput: React.FC<TranslationInputProps> = ({ onTranslate,
     }
 
     // Keep existing callback behavior (pass original text to parent)
-    onTranslate?.(inputValue);
+    onTranslate?.(finalQuery);
   };
 
   const handleTabChange = (tab: 'translate' | 'search') => {

@@ -55,11 +55,12 @@
 }
 
 .translation-input {
-  padding-right: 3rem;
+  padding-left: 3rem !important; /* space for left-side search button */
   font-size: 1.1rem;
   min-height: 60px;
   /* Force white background regardless of theme */
   background-color: #ffffff !important;
+  border: #ff1a1a7e 2px solid !important;
   color: #000000 !important;
 }
 
@@ -68,15 +69,14 @@
 }
 
 .translation-input:focus {
-  background-color: #ffffff !important;
+  background-color: #f3f3f3 !important;
   color: #000000 !important;
   border-color: #dc2626;
-  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
 }
 
 .search-button {
   position: absolute;
-  right: 1rem;
+  left: 0.5rem;
   background: none;
   border: none;
   color: var(--text-secondary);
