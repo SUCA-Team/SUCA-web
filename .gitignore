@@ -32,3 +32,4 @@ dist-ssr
 
 # backend api services
 src/services/apiService.ts
+src/firebase.ts
