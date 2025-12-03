@@ -55,7 +55,7 @@
 }
 
 .translation-input {
-  padding-left: 3rem !important; /* space for left-side search button */
+  padding-left: 3rem; /* space for left-side search button */
   font-size: 1.1rem;
   min-height: 60px;
   /* Force white background regardless of theme */
@@ -76,7 +76,7 @@
 
 .search-button {
   position: absolute;
-  left: 0.5rem;
+  left: 1rem;
   background: none;
   border: none;
   color: var(--text-secondary);

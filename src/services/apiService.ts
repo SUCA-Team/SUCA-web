@@ -25,8 +25,11 @@ export interface SearchResult {
 }
 
 export interface SearchResponse {
+  success: boolean;
+  message?: string;
   results: SearchResult[];
   total_count: number;
+  query?: string;
 }
 
 export interface HealthResponse {
@@ -39,7 +42,7 @@ class ApiService {
   private useMocks: boolean;
 
   private constructor() {
-    this.useMocks = (import.meta as any).env?.VITE_USE_MOCKS === 'true';
+    this.useMocks = import.meta.env.VITE_USE_MOCKS === 'true';
 
     this.client = axios.create({
       baseURL: API_CONFIG.BASE_URL,
@@ -195,9 +198,15 @@ function mockSearch(query: string, limit?: number): SearchResponse {
     variants: [{ word: query, reading: query }]
   };
   const count = Math.max(1, Math.min(limit ?? 3, 5));
-  const results = Array.from({ length: count }).map((_, i) => ({
+  const results: SearchResult[] = Array.from({ length: count }).map((_, i) => ({
     ...base,
     word: `${query}-${i + 1}`
   }));
-  return { results, total_count: results.length };
+  return {
+    success: true,
+    message: 'Mock dictionary search',
+    results,
+    total_count: results.length,
+    query
+  };
 }
