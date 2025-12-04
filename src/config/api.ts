@@ -4,6 +4,7 @@ export const API_CONFIG = {
   ENDPOINTS: {
     HEALTH: '/v1/health',
     SEARCH: '/v1/search',
+    SEARCH_SUGGESTIONS: '/v1/search/suggestions',
     TRANSLATE_EN_TO_JP: '/v1/translate/en2jp',
     TRANSLATE_JP_TO_EN: '/v1/translate/jp2en',
   }

@@ -41,6 +41,16 @@ export interface HealthResponse {
   status: string;
 }
 
+export interface AuthTokenResponse {
+  access_token: string;
+  token_type: string; // typically "bearer"
+  expires_in: number; // seconds
+}
+
+export interface SearchSuggestionsResponse {
+  suggestions: string[];
+}
+
 class ApiService {
   private static instance: ApiService;
   private client: AxiosInstance;
@@ -57,6 +67,12 @@ class ApiService {
     // Request interceptor
     this.client.interceptors.request.use(
       (config) => {
+        // Attach auth token if present
+        const token = localStorage.getItem('suca_access_token');
+        if (token) {
+          config.headers = config.headers ?? {};
+          (config.headers as any)['Authorization'] = `Bearer ${token}`;
+        }
         console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`);
         return config;
       },
@@ -118,6 +134,42 @@ class ApiService {
         ...(limit && { limit })
       }
     });
+    return response.data;
+  }
+
+  // Search suggestions
+  async getSearchSuggestions(query: string, limit = 10): Promise<string[]> {
+    const response = await this.client.get<SearchSuggestionsResponse>(
+      API_CONFIG.ENDPOINTS.SEARCH_SUGGESTIONS,
+      { params: { q: query, limit } }
+    );
+    return response.data.suggestions ?? [];
+  }
+
+  // Authentication - register (sign up)
+  async registerUser(username: string, email: string, password: string): Promise<AuthTokenResponse> {
+    // Backend expects JSON body: { username, email, password }
+    const response = await this.client.post<AuthTokenResponse>('/v1/auth/register', {
+      username,
+      email,
+      password,
+    });
+    return response.data;
+  }
+
+  // Authentication - login
+  async loginUser(username: string, password: string): Promise<AuthTokenResponse> {
+    // Backend expects JSON body: { username, password }
+    const response = await this.client.post<AuthTokenResponse>('/v1/auth/login', {
+      username,
+      password,
+    });
+    return response.data;
+  }
+
+  // Authentication - get current user info
+  async getCurrentUser(): Promise<{ user_id: string; username: string; email: string }> {
+    const response = await this.client.get('/v1/auth/me');
     return response.data;
   }
 }

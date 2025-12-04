@@ -126,31 +126,33 @@ export const DictionaryPage: React.FC = () => {
                             </span>
                           )}
                         </div>
-                        {/* More examples button */}
-                        <button
-                          style={{
-                            marginTop: 'auto',
-                            alignSelf: 'center',
-                            border: '1.5px solid #ffb3b3',
-                            background: 'none',
-                            color: '#d32f2f',
-                            borderRadius: '8px',
-                            padding: '6px 18px',
-                            fontWeight: 600,
-                            fontSize: '1em',
-                            cursor: 'pointer',
-                            marginBottom: '0.5rem',
-                          }}
-                        >
-                          More examples
-                        </button>
+                        {/* More examples button: show only if total examples > 1 across meanings */}
+                        {result.meanings.reduce((sum, m) => sum + (m.examples ? m.examples.length : 0), 0) > 1 && (
+                          <button
+                            style={{
+                              marginTop: 'auto',
+                              alignSelf: 'center',
+                              border: '1.5px solid #ffb3b3',
+                              background: 'none',
+                              color: '#d32f2f',
+                              borderRadius: '8px',
+                              padding: '6px 18px',
+                              fontWeight: 600,
+                              fontSize: '1em',
+                              cursor: 'pointer',
+                              marginBottom: '0.5rem',
+                            }}
+                          >
+                            More examples
+                          </button>
+                        )}
                       </div>
 
                       {/* Right card: type, meanings, examples */}
                       <div
                         className="dictionary-info-card"
                         style={{
-                          padding: '1.5rem 1.5rem 1rem 1.5rem',
+                          padding: '2rem',
                           border: '1px solid #ddd',
                           borderRadius: '16px',
                           backgroundColor: '#fff',
@@ -160,17 +162,17 @@ export const DictionaryPage: React.FC = () => {
                           flexDirection: 'column',
                           justifyContent: 'flex-start',
                           alignItems: 'flex-start',
-                          fontSize: '1.25em',
+                          fontSize: '1.15em',
                         }}
                       >
                         {result.meanings.map((meaning, mIndex) => (
-                          <div key={mIndex} style={{ marginBottom: '1.5rem', width: '100%' }}>
+                          <div key={mIndex} style={{ width: '100%' }}>
                             {/* POS header */}
                             <div style={{ color: '#333', fontWeight: 700, fontSize: '1.2em', marginBottom: '0.5rem', letterSpacing: '0.02em', textAlign: 'left' }}>
                               {meaning.pos.join(', ').toUpperCase()}
                             </div>
                             {/* Definitions */}
-                            <ol style={{ margin: '0 0 1.2rem 0', paddingLeft: '1.2rem', color: '#222', fontSize: '1.15em', fontWeight: 500, textAlign: 'left' }}>
+                            <ol style={{ margin: '0 0 1rem 0', paddingLeft: '1.9rem', color: '#222', fontSize: '1.15em', fontWeight: 500, textAlign: 'left' }}>
                               {meaning.definitions.map((def, dIndex) => (
                                 <li key={dIndex} style={{ marginBottom: '0.5rem', textAlign: 'left', fontSize: '1.15em' }}>{def}</li>
                               ))}
@@ -186,6 +188,10 @@ export const DictionaryPage: React.FC = () => {
                                   </div>
                                 ))}
                               </div>
+                            )}
+                            {/* Separator between entries */}
+                            {mIndex < result.meanings.length - 1 && (
+                              <hr style={{ width: '100%', border: 'none', borderTop: '1.5px solid #ddd', margin: '1rem 0' }} />
                             )}
                           </div>
                         ))}

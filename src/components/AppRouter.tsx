@@ -5,7 +5,6 @@ import { HomePage } from '../pages/Home/HomePage';
 import { AboutPage } from '../pages/About/AboutPage';
 import { FeaturesPage } from '../pages/Features/FeaturesPage';
 import DictionaryPage from '../pages/Dictionary/DictionaryPage';
-import TranslatePage from '../pages/Translate/TranslatePage';
 import FlashcardPage from '../pages/Flashcard/FlashcardPage';
 import MultiplayerPage from '../pages/Multiplayer/MultiplayerPage';
 import LoginPage from '../pages/Login/LoginPage';
@@ -21,7 +20,7 @@ export const AppRouter: React.FC = () => {
           <Route path="/about" element={<AboutPage />} />
           <Route path="/features" element={<FeaturesPage />} />
           <Route path="/dictionary" element={<DictionaryPage />} />
-          <Route path="/translate" element={<TranslatePage />} />
+          {/** Translate page removed */}
           <Route path="/flashcard" element={<FlashcardPage />} />
           <Route path="/multiplayer" element={<MultiplayerPage />} />
           <Route path="/login" element={<LoginPage />} />

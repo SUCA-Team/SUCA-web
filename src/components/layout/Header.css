@@ -37,8 +37,10 @@
   flex: 1 1 auto;
 
 }
-
-.center-nav { position: relative; }
+ .center-nav { position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+} 
 
 .nav-link {
   position: relative;
@@ -131,8 +133,7 @@
 .right {
   display: flex;
   align-items: center;
-  width: 100px;
-  margin-right: 5%;
+  /* margin-right: 5%; */
 }
 
 .login-btn {
@@ -149,10 +150,18 @@
 .user-chip {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
   background: transparent;
   border-radius: 20px;
   padding: 4px 8px;
+  gap: 8px;
+  max-width: 340px; /* constrain overall chip width */
+}
+.user-chip .chip-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0; /* allow child truncation */
+  flex: 1 1 auto; /* take remaining space and push left when needed */
 }
 .user-chip .avatar {
   width: 60px;
@@ -165,6 +174,9 @@
   font-weight: 500;
   color: #111111;
   font-size: 30px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; /* truncate long names instead of growing */
 }
 .user-chip .signout-btn {
   margin-left: 6px;
@@ -173,6 +185,7 @@
   color: #666;
   cursor: pointer;
   font-size: 14px;
+  flex: 0 0 auto; /* keep button fixed and not pushed off-screen */
 }
 .user-chip .signout-btn:hover { color: #111; }
 
@@ -184,6 +197,20 @@
   height: var(--logout-size);
   display: inline-block;
   object-fit: contain;
+}
+
+/* Initial avatar style for email signups */
+.avatar-initial {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #8b0000; /* dark red */
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 28px;
 }
 
 @media (max-width: 900px) {
