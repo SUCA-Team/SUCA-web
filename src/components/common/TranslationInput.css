@@ -44,7 +44,7 @@
 }
 
 .translation-input {
-  padding-left: 4rem !important; /* space for left-side search button */
+  padding-left: 1rem !important; /* space for left-side search button */
   font-size: 1.1rem;
   min-height: 60px;
   /* Force white background regardless of theme */
@@ -65,7 +65,7 @@
 
 .search-button {
   position: absolute;
-  left: 1rem;
+  right: 1rem;
   background: none;
   border: none;
   color: var(--text-secondary);
@@ -93,13 +93,15 @@
   top: 100%;
   left: 0;
   right: 0;
-  background-color: var(--suggestion-bg);
+  /* Force solid white so it fully covers content behind */
+  background-color: #ffffff !important;
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
   box-shadow: var(--shadow-hover);
   max-height: 300px;
   overflow-y: auto;
-  z-index: 1000;
+  /* Ensure it stacks above page banners and content */
+  z-index: 2000;
   margin-top: 0.5rem;
 }
 
@@ -109,7 +111,8 @@
   font-weight: 600;
   color: var(--text-secondary);
   border-bottom: 1px solid var(--border-color);
-  background-color: var(--bg-secondary);
+  /* Keep header solid white to avoid bleed-through */
+  background-color: #ffffff !important;
 }
 
 .suggestion-item {
@@ -117,6 +120,8 @@
   cursor: pointer;
   border-bottom: 1px solid var(--border-color);
   transition: background-color var(--transition-duration);
+  /* Solid white rows so background content is not visible */
+  background-color: #ffffff;
 }
 
 .suggestion-item:last-child {

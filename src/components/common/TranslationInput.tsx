@@ -1,9 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useWordSuggestions } from '../../hooks/useWordSuggestions';
 import { WordRecommendationService } from '../../services/wordRecommendationService';
-import type { WordSuggestion } from '../../types/translation';
 import './TranslationInput.css';
-import { convertSearchInput } from '../../utils/romajiToKana';
+import { convertSearchInput, convertSearchInputForSubmit } from '../../utils/romajiToKana';
 
 interface TranslationInputProps {
   onTranslate?: (text: string) => void;
@@ -52,8 +51,9 @@ export const TranslationInput: React.FC<TranslationInputProps> = ({ onTranslate,
       // debounce calls so we don't request on every keystroke
       if (suggestionsTimerRef.current) clearTimeout(suggestionsTimerRef.current);
       suggestionsTimerRef.current = setTimeout(() => {
-        // Use raw input for suggestions; service handles kana conversion internally
-        void getSuggestions(value);
+        // Convert romaji to kana for API which expects kana/kanji
+        const kanaQuery = convertSearchInput(value);
+        void getSuggestions(kanaQuery);
         setShowSuggestions(true);
       }, 300);
     } else {
@@ -72,8 +72,8 @@ export const TranslationInput: React.FC<TranslationInputProps> = ({ onTranslate,
     }
   };
 
-  const handleSuggestionClick = (suggestion: WordSuggestion) => {
-    setInputValue(suggestion.word);
+  const handleSuggestionClick = (suggestion: string) => {
+    setInputValue(suggestion);
     setShowSuggestions(false);
     inputRef.current?.focus();
   };
@@ -87,7 +87,7 @@ export const TranslationInput: React.FC<TranslationInputProps> = ({ onTranslate,
     clearSuggestions();
 
     // Convert outside quotes to kana before backend and callback
-    const finalQuery = convertSearchInput(inputValue);
+    const finalQuery = convertSearchInputForSubmit(inputValue);
 
     // Send final query to backend (if configured). We don't require a response yet,
     // but we call it now so the app is ready when your backend is connected.
@@ -170,28 +170,14 @@ export const TranslationInput: React.FC<TranslationInputProps> = ({ onTranslate,
             ) : suggestions.length > 0 ? (
               <>
                 <div className="suggestions-header">Suggestions</div>
-                {suggestions.map((suggestion, index) => (
+                {suggestions.map((s, index) => (
                   <div
-                    key={`${suggestion.word}-${index}`}
+                    key={`${s}-${index}`}
                     className="suggestion-item"
-                    onClick={() => handleSuggestionClick(suggestion)}
+                    onClick={() => handleSuggestionClick(s)}
                   >
                     <div className="suggestion-word">
-                      <span className="word">{suggestion.word}</span>
-                      {suggestion.reading && (
-                        <span className="reading">({suggestion.reading})</span>
-                      )}
-                    </div>
-                    <div className="suggestion-meaning">{suggestion.meaning}</div>
-                    <div className="suggestion-meta">
-                      <span className={`type type-${suggestion.type}`}>
-                        {suggestion.type}
-                      </span>
-                      {suggestion.level && (
-                        <span className={`level level-${suggestion.level.toLowerCase()}`}>
-                          {suggestion.level}
-                        </span>
-                      )}
+                      <span className="word">{s}</span>
                     </div>
                   </div>
                 ))}

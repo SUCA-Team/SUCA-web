@@ -149,3 +149,35 @@ export function convertSearchInput(input: string): string {
 }
 
 export default convertSearchInput;
+
+/**
+ * Convert input for dictionary submit: convert romaji outside quotes to kana,
+ * but strip quotes and keep quoted content as-is (e.g., "water" -> water).
+ */
+export function convertSearchInputForSubmit(input: string): string {
+  if (!input.trim()) return input;
+
+  const parts: string[] = [];
+  let i = 0;
+  while (i < input.length) {
+    if (input[i] === '"') {
+      const end = input.indexOf('"', i + 1);
+      if (end === -1) {
+        // No closing quote; treat rest as quoted, but remove starting quote
+        parts.push(input.slice(i + 1));
+        break;
+      } else {
+        // Push inner content without quotes
+        parts.push(input.slice(i + 1, end));
+        i = end + 1;
+      }
+    } else {
+      const nextQuote = input.indexOf('"', i);
+      const segment = nextQuote === -1 ? input.slice(i) : input.slice(i, nextQuote);
+      parts.push(convertRomajiSegmentToKana(segment));
+      i = nextQuote === -1 ? input.length : nextQuote;
+    }
+  }
+
+  return parts.join('');
+}

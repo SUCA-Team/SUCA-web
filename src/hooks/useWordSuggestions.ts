@@ -1,9 +1,8 @@
 import { useState, useCallback } from 'react';
-import type { WordSuggestion } from '../types/translation';
-import { WordRecommendationService } from '../services/wordRecommendationService';
+import ApiService from '../services/apiService';
 
 export interface UseWordSuggestionsResult {
-  suggestions: WordSuggestion[];
+  suggestions: string[];
   isLoading: boolean;
   error: string | null;
   getSuggestions: (query: string) => Promise<void>;
@@ -11,11 +10,11 @@ export interface UseWordSuggestionsResult {
 }
 
 export const useWordSuggestions = (): UseWordSuggestionsResult => {
-  const [suggestions, setSuggestions] = useState<WordSuggestion[]>([]);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const wordService = WordRecommendationService.getInstance();
+  const api = ApiService.getInstance();
 
   const getSuggestions = useCallback(async (query: string) => {
     if (!query.trim()) {
@@ -27,7 +26,7 @@ export const useWordSuggestions = (): UseWordSuggestionsResult => {
     setError(null);
 
     try {
-      const results = await wordService.getSuggestions(query);
+      const results = await api.getSearchSuggestions(query);
       setSuggestions(results);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to get suggestions');
@@ -35,7 +34,7 @@ export const useWordSuggestions = (): UseWordSuggestionsResult => {
     } finally {
       setIsLoading(false);
     }
-  }, [wordService]);
+  }, [api]);
 
   const clearSuggestions = useCallback(() => {
     setSuggestions([]);

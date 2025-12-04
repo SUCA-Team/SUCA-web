@@ -47,6 +47,10 @@ export interface AuthTokenResponse {
   expires_in: number; // seconds
 }
 
+export interface SearchSuggestionsResponse {
+  suggestions: string[];
+}
+
 class ApiService {
   private static instance: ApiService;
   private client: AxiosInstance;
@@ -131,6 +135,15 @@ class ApiService {
       }
     });
     return response.data;
+  }
+
+  // Search suggestions
+  async getSearchSuggestions(query: string, limit = 10): Promise<string[]> {
+    const response = await this.client.get<SearchSuggestionsResponse>(
+      API_CONFIG.ENDPOINTS.SEARCH_SUGGESTIONS,
+      { params: { q: query, limit } }
+    );
+    return response.data.suggestions ?? [];
   }
 
   // Authentication - register (sign up)
