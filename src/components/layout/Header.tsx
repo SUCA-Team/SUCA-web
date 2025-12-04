@@ -14,6 +14,7 @@ export const Header: React.FC = () => {
   const [highlightVisible, setHighlightVisible] = useState(false);
   const auth = useAuth();
   const user = auth?.user ?? null;
+  const [sucaUser, setSucaUser] = useState<{ user_id: string; username: string; email: string } | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -64,6 +65,16 @@ export const Header: React.FC = () => {
     return () => { window.removeEventListener('resize', update); if (hideTimer) window.clearTimeout(hideTimer); };
   }, [location, highlightVisible]);
 
+  // Load SUCA backend user info if present
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('suca_user');
+      setSucaUser(raw ? JSON.parse(raw) : null);
+    } catch {
+      setSucaUser(null);
+    }
+  }, [open]);
+
   return (
     <>
       <header className="header">
@@ -97,13 +108,21 @@ export const Header: React.FC = () => {
           </nav>
 
           <div className="right">
-            {user ? (
+            {(user || sucaUser) ? (
               (() => {
-                const display = user.displayName || user.email || 'User';
+                const display = (user?.displayName || user?.email || sucaUser?.username || sucaUser?.email || 'User');
+                const photo = user?.photoURL ?? undefined;
+                const firstInitial = (sucaUser?.username || sucaUser?.email || 'U').charAt(0).toUpperCase();
                 return (
                   <div className="user-chip" title={display}>
-                    <img className="avatar" src={user.photoURL ?? undefined} alt={display ?? 'User avatar'} />
-                    <span className="gname">{(display || '').split(' ')[0]}</span>
+                    <div className="chip-left">
+                      {photo ? (
+                        <img className="avatar" src={photo} alt={display ?? 'User avatar'} />
+                      ) : (
+                        <div className="avatar avatar-initial" aria-label="User avatar">{firstInitial}</div>
+                      )}
+                      <span className="gname" title={display}>{(display || '').split(' ')[0]}</span>
+                    </div>
                     <button
                       className="signout-btn"
                       onClick={async (e) => {
@@ -111,6 +130,10 @@ export const Header: React.FC = () => {
                         try {
                           await signOutUser();
                           // after signing out, navigate back to homepage
+                          // Clear backend token and cached user
+                          localStorage.removeItem('suca_access_token');
+                          localStorage.removeItem('suca_user');
+                          setSucaUser(null);
                           navigate('/');
                         } catch (err) {
                           console.error('Sign out failed', err);
