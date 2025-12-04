@@ -1,20 +1,9 @@
 .translation-input-container {
   position: relative;
   width: 100%;
-  max-width: 600px;
 }
 
 /* When embedded in a full page (e.g. Dictionary) allow a wider search box */
-.page .translation-input-container {
-  max-width: 980px; /* wider for desktop */
-}
-
-@media (max-width: 1200px) {
-  .page .translation-input-container {
-    max-width: 760px;
-  }
-}
-
 
 .input-tabs {
   display: flex;
@@ -55,11 +44,12 @@
 }
 
 .translation-input {
-  padding-right: 3rem;
+  padding-left: 4rem !important; /* space for left-side search button */
   font-size: 1.1rem;
   min-height: 60px;
   /* Force white background regardless of theme */
   background-color: #ffffff !important;
+  border: #ff1a1a7e 2px solid !important;
   color: #000000 !important;
 }
 
@@ -68,15 +58,14 @@
 }
 
 .translation-input:focus {
-  background-color: #ffffff !important;
+  background-color: #f3f3f3 !important;
   color: #000000 !important;
   border-color: #dc2626;
-  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
 }
 
 .search-button {
   position: absolute;
-  right: 1rem;
+  left: 1rem;
   background: none;
   border: none;
   color: var(--text-secondary);

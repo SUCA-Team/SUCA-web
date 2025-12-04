@@ -1,5 +1,6 @@
 import type { WordSuggestion } from '../types/translation';
 import ApiService, { type SearchResponse } from './apiService';
+import { convertSearchInput } from '../utils/romajiToKana';
 
 // Mock Japanese vocabulary database
 const mockVocabulary: WordSuggestion[] = [
@@ -172,6 +173,34 @@ export class WordRecommendationService {
   private static instance: WordRecommendationService;
   private vocabulary: WordSuggestion[] = mockVocabulary;
 
+  private constructor() {
+    // Augment vocabulary with kana variants derived from romaji readings
+    const additions: WordSuggestion[] = [];
+    const seen = new Set<string>(this.vocabulary.map(v => `${v.word}|${v.reading ?? ''}`));
+    for (const item of this.vocabulary) {
+      if (item.reading) {
+        const kanaFromReading = convertSearchInput(item.reading);
+        // Only add if it differs and not already present
+        if (kanaFromReading && kanaFromReading !== item.word) {
+          const key = `${kanaFromReading}|${item.reading}`;
+          if (!seen.has(key)) {
+            additions.push({
+              word: kanaFromReading,
+              reading: item.reading,
+              meaning: item.meaning,
+              type: /[\u3040-\u309F]/.test(kanaFromReading) ? 'hiragana' : item.type,
+              level: item.level,
+            });
+            seen.add(key);
+          }
+        }
+      }
+    }
+    if (additions.length) {
+      this.vocabulary = [...this.vocabulary, ...additions];
+    }
+  }
+
   static getInstance(): WordRecommendationService {
     if (!WordRecommendationService.instance) {
       WordRecommendationService.instance = new WordRecommendationService();
@@ -186,28 +215,47 @@ export class WordRecommendationService {
     if (!query.trim()) {
       return [];
     }
-
     const normalizedQuery = query.toLowerCase().trim();
+    const kanaQuery = convertSearchInput(query).toLowerCase();
 
     // Local/mock suggestion behavior only (used while the user types).
     // Simulate a small delay to make UX smoother.
     await new Promise((resolve) => setTimeout(resolve, 60));
 
-    const suggestions = this.vocabulary.filter((item) => {
-      const matchesWord = item.word.toLowerCase().includes(normalizedQuery);
-      const matchesReading = item.reading?.toLowerCase().includes(normalizedQuery);
-      const matchesMeaning = item.meaning.toLowerCase().includes(normalizedQuery);
-      return matchesWord || matchesReading || matchesMeaning;
+    // Phase 1: try direct matches first (kanji/hiragana/katakana exact contains, and English meaning)
+    let suggestions = this.vocabulary.filter((item) => {
+      const wordLower = item.word.toLowerCase();
+      const matchesWordDirect = wordLower.includes(normalizedQuery);
+      const matchesMeaningDirect = item.meaning.toLowerCase().includes(normalizedQuery);
+      return matchesWordDirect || matchesMeaningDirect;
     });
+
+    // Phase 2: if nothing found, attempt romaji→kana conversion matching
+    if (suggestions.length === 0) {
+      suggestions = this.vocabulary.filter((item) => {
+        const wordLower = item.word.toLowerCase();
+        const readingLower = item.reading?.toLowerCase();
+
+        const matchesWordKana = wordLower.includes(kanaQuery);
+        const matchesReadingKana = Boolean(readingLower && (
+          convertSearchInput(readingLower).toLowerCase().includes(kanaQuery)
+        ));
+        return matchesWordKana || matchesReadingKana;
+      });
+    }
 
     suggestions.sort((a, b) => {
       const aExact =
         a.word.toLowerCase() === normalizedQuery ||
+        a.word.toLowerCase() === kanaQuery ||
         a.reading?.toLowerCase() === normalizedQuery ||
+        (a.reading && convertSearchInput(a.reading).toLowerCase() === kanaQuery) ||
         a.meaning.toLowerCase() === normalizedQuery;
       const bExact =
         b.word.toLowerCase() === normalizedQuery ||
+        b.word.toLowerCase() === kanaQuery ||
         b.reading?.toLowerCase() === normalizedQuery ||
+        (b.reading && convertSearchInput(b.reading).toLowerCase() === kanaQuery) ||
         b.meaning.toLowerCase() === normalizedQuery;
 
       if (aExact && !bExact) return -1;

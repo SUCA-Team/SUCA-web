@@ -59,7 +59,6 @@ export const TranslatePage: React.FC = () => {
               type="submit"
               disabled={isLoading || !inputText.trim()}
               className="btn btn-primary"
-                style={{ color: 'white' }}
             >
               {isLoading ? 'Translating...' : 'Translate'}
             </button>
@@ -68,7 +67,6 @@ export const TranslatePage: React.FC = () => {
               type="button"
               onClick={handleClear}
               className="btn btn-clear"
-                style={{ color: 'white' }}
             >
               Clear
             </button>
