@@ -1,16 +1,20 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import AudioButtonImg from '../../assets/AudioButton.png';
-import FlipKanjiReadingImg from '../../assets/FlipKanjiReading.png';
+// Replace flip button with a simple Copy action
 import AddButtonImg from '../../assets/AddButton.png';
 import { TranslationInput } from '../../components/common/TranslationInput';
 import ApiService, { type SearchResponse } from '../../services/apiService';
 
 export const DictionaryPage: React.FC = () => {
+  const PAGE_SIZE = 10;
   const [searchResults, setSearchResults] = useState<SearchResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [query, setQuery] = useState<string>('');
+  const [page, setPage] = useState<number>(1);
+  const [pos, setPos] = useState<'noun' | 'verb' | 'adjective' | null>(null);
 
-  const handleSearch = async (text: string) => {
+  const fetchResults = async (text: string, pageNum: number, posFilter: 'noun' | 'verb' | 'adjective' | null) => {
     if (!text.trim()) return;
     
     setIsLoading(true);
@@ -18,7 +22,8 @@ export const DictionaryPage: React.FC = () => {
     
     try {
       const apiService = ApiService.getInstance();
-      const results = await apiService.searchDictionary(text);
+      // Request up to 50 results from API; we'll paginate client-side at 10 per page
+      const results = await apiService.searchDictionary(text, 50);
       
       // Handle the new API response structure
       if (!results.success) {
@@ -37,6 +42,40 @@ export const DictionaryPage: React.FC = () => {
     }
   };
 
+  const handleSearch = async (text: string) => {
+    setQuery(text);
+    setPage(1);
+    await fetchResults(text, 1, pos);
+  };
+
+  const handlePosChange = async (newPos: 'noun' | 'verb' | 'adjective' | null) => {
+    setPos(newPos);
+    setPage(1);
+    if (query.trim()) {
+      await fetchResults(query, 1, newPos);
+    }
+  };
+
+  const handlePageChange = async (nextPage: number) => {
+    if (nextPage < 1) return;
+    setPage(nextPage);
+    if (query.trim()) {
+      // No need to refetch; results are already loaded (limit=50). Just change page.
+      // If you want to refetch for server-side paging, revert to calling fetchResults.
+    }
+  };
+
+  // Ensure the viewport jumps back to top whenever the page changes
+  useEffect(() => {
+    // Prefer window scroll to top to avoid issues with nested scroll containers
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Also try bringing the main content into view in case of custom layouts
+    const container = document.querySelector('.page-content') as HTMLElement | null;
+    if (container) {
+      container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [page]);
+
   return (
     <main className="page page-dictionary">
       <div className="page-content">
@@ -44,6 +83,24 @@ export const DictionaryPage: React.FC = () => {
         <p className="page-body">Find any Japanese word in seconds.</p>
         <section style={{marginTop: '1.5rem', width: '90vw'}}>
           <TranslationInput onTranslate={handleSearch} initialTab="search" hideTabs={true} />
+          {/* POS filter dropdown */}
+          <div style={{ marginTop: '0.5rem' }}>
+            <label htmlFor="pos-filter" style={{ marginRight: '0.5rem' }}>Part of speech:</label>
+            <select
+              id="pos-filter"
+              value={pos ?? ''}
+              onChange={(e) => {
+                const v = e.target.value as '' | 'noun' | 'verb' | 'adjective';
+                handlePosChange(v === '' ? null : v);
+              }}
+              style={{ padding: '0.4rem 0.6rem', borderRadius: '6px', border: '1px solid #ddd' }}
+            >
+              <option value="">--</option>
+              <option value="noun">noun</option>
+              <option value="verb">verb</option>
+              <option value="adjective">adjective</option>
+            </select>
+          </div>
           
           {isLoading && (
             <div style={{ marginTop: '1rem', padding: '1rem', textAlign: 'center' }}>
@@ -59,16 +116,22 @@ export const DictionaryPage: React.FC = () => {
           
           {searchResults && searchResults.success && (
             <div style={{ marginTop: '1.5rem' }}>
-              <div style={{ marginBottom: '1rem', padding: '0.5rem', background: '#e8f5e8', borderRadius: '4px', color: '#2e7d32' }}>
+              <div style={{ marginBottom: '1rem', padding: '0.5rem', background: '#e8f5e8', borderRadius: '4px', color: '#2e7d32', width: '50%', marginLeft: 'auto', marginRight: 'auto', textAlign: 'center' }}>
                 {searchResults.message}
               </div>
               <h3>
                 {searchResults.total_count} {searchResults.total_count === 1 ? 'result' : 'results'} found for '{searchResults.query}'
               </h3>
-              <ul className="dictionary-results-list" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                {searchResults.results.map((result, index) => (
-                  <li key={index} style={{ margin: '1rem 0' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1rem' }}>
+              {(() => {
+                const total = searchResults.results.length;
+                const start = (page - 1) * PAGE_SIZE;
+                const end = Math.min(start + PAGE_SIZE, total);
+                const pageResults = searchResults.results.slice(start, end);
+                return (
+                  <ul className="dictionary-results-list" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                    {pageResults.map((result, index) => (
+                  <li key={index} style={{ margin: '3rem 0' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 2.7fr',gap: '2rem' }}>
                       {/* Left card: word and tags */}
                       <div
                         className="dictionary-word-card"
@@ -93,15 +156,51 @@ export const DictionaryPage: React.FC = () => {
                       >
                         {/* Kanji at top */}
                         <div style={{ width: '100%', textAlign: 'center', marginBottom: '0.5rem' }}>
-                          <strong style={{ fontSize: '60px', fontWeight: 700 }}>{result.word}</strong>
+                          {(() => {
+                            const HIRAGANA_RANGE = /[\u3040-\u309F]/;
+                            const KATAKANA_RANGE = /[\u30A0-\u30FF]/;
+                            const isKanaOnly = (s: string) => {
+                              if (!s) return false;
+                              for (const ch of s) {
+                                if (!(HIRAGANA_RANGE.test(ch) || KATAKANA_RANGE.test(ch))) {
+                                  return false;
+                                }
+                              }
+                              return true;
+                            };
+                            const word = result.word;
+                            const reading = result.reading;
+                            if (word && reading && !isKanaOnly(word)) {
+                              return (
+                                <ruby style={{ fontSize: '60px', fontWeight: 700 }}>
+                                  {word}
+                                  <rt style={{ fontSize: '18px', fontWeight: 500 }}>{reading}</rt>
+                                </ruby>
+                              );
+                            }
+                            return (<strong style={{ fontSize: '60px', fontWeight: 700 }}>{word}</strong>);
+                          })()}
                         </div>
                         {/* Icon buttons row */}
                         <div style={{ display: 'flex', justifyContent: 'center', gap: '1.2rem', marginBottom: '0.5rem' }}>
                           <button style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }} title="Play audio">
                             <img src={AudioButtonImg} alt="Audio" style={{ width: 28, height: 28 }} />
                           </button>
-                          <button style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }} title="Flip Kanji/Reading">
-                            <img src={FlipKanjiReadingImg} alt="Flip" style={{ width: 28, height: 28 }} />
+                          <button
+                            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                            title="Copy"
+                            onClick={() => {
+                              const textToCopy = result.word || '';
+                              if (navigator.clipboard) {
+                                void navigator.clipboard.writeText(textToCopy);
+                              }
+                            }}
+                          >
+                            {/* Simple copy glyph */}
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                              <rect x="3" y="3" width="13" height="13" rx="2" ry="2"></rect>
+                            </svg>
                           </button>
                           <button style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }} title="Add to list">
                             <img src={AddButtonImg} alt="Add" style={{ width: 28, height: 28 }} />
@@ -198,8 +297,10 @@ export const DictionaryPage: React.FC = () => {
                       </div>
                     </div>
                   </li>
-                ))}
-              </ul>
+                    ))}
+                  </ul>
+                );
+              })()}
             </div>
           )}
           
@@ -208,6 +309,37 @@ export const DictionaryPage: React.FC = () => {
               No results found for '{searchResults.query}'. Try a different search term.
             </div>
           )}
+
+          {/* Pagination controls: numbered page selector based on available results */}
+          {searchResults && searchResults.success && (() => {
+            const total = searchResults.results.length;
+            const totalPages = Math.ceil(total / PAGE_SIZE);
+            if (totalPages <= 1) return null;
+            const buttons = Array.from({ length: totalPages }, (_, i) => i + 1);
+            return (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', marginTop: '1rem' }}>
+                {buttons.map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => handlePageChange(p)}
+                    disabled={isLoading}
+                    style={{
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '8px',
+                      border: '1px solid #333',
+                      background: p === page ? '#8b0000ff' : '#8b0000ff',
+                      color: '#fff',
+                      cursor: isLoading ? 'not-allowed' : 'pointer',
+                      opacity: p === page ? 1 : 0.85,
+                    }}
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
+            );
+          })()}
         </section>
       </div>
     </main>

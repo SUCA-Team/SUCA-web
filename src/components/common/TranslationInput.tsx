@@ -76,6 +76,12 @@ export const TranslationInput: React.FC<TranslationInputProps> = ({ onTranslate,
     setInputValue(suggestion);
     setShowSuggestions(false);
     inputRef.current?.focus();
+    // Immediately trigger search/translate with the suggestion
+    if (onTranslate) {
+      // Use the same conversion as submit for consistency
+      const finalQuery = convertSearchInputForSubmit(suggestion);
+      onTranslate(finalQuery);
+    }
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
