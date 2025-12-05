@@ -116,7 +116,7 @@ export const DictionaryPage: React.FC = () => {
           
           {searchResults && searchResults.success && (
             <div style={{ marginTop: '1.5rem' }}>
-              <div style={{ marginBottom: '1rem', padding: '0.5rem', background: '#e8f5e8', borderRadius: '4px', color: '#2e7d32' }}>
+              <div style={{ marginBottom: '1rem', padding: '0.5rem', background: '#e8f5e8', borderRadius: '4px', color: '#2e7d32', width: '50%', marginLeft: 'auto', marginRight: 'auto', textAlign: 'center' }}>
                 {searchResults.message}
               </div>
               <h3>
@@ -130,8 +130,8 @@ export const DictionaryPage: React.FC = () => {
                 return (
                   <ul className="dictionary-results-list" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                     {pageResults.map((result, index) => (
-                  <li key={index} style={{ margin: '1rem 0' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1rem' }}>
+                  <li key={index} style={{ margin: '3rem 0' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 2.7fr',gap: '2rem' }}>
                       {/* Left card: word and tags */}
                       <div
                         className="dictionary-word-card"
@@ -328,7 +328,7 @@ export const DictionaryPage: React.FC = () => {
                       height: '40px',
                       borderRadius: '8px',
                       border: '1px solid #333',
-                      background: p === page ? '#333' : '#222',
+                      background: p === page ? '#8b0000ff' : '#8b0000ff',
                       color: '#fff',
                       cursor: isLoading ? 'not-allowed' : 'pointer',
                       opacity: p === page ? 1 : 0.85,
