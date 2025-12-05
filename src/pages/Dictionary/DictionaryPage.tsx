@@ -3,7 +3,7 @@ import AudioButtonImg from '../../assets/AudioButton.png';
 // Replace flip button with a simple Copy action
 import AddButtonImg from '../../assets/AddButton.png';
 import { TranslationInput } from '../../components/common/TranslationInput';
-import ApiService, { type SearchResponse } from '../../services/apiService';
+import ApiService, { type SearchResponse, SearchPos } from '../../services/apiService';
 
 export const DictionaryPage: React.FC = () => {
   const PAGE_SIZE = 10;
@@ -12,10 +12,10 @@ export const DictionaryPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState<string>('');
   const [page, setPage] = useState<number>(1);
-  const [pos, setPos] = useState<'noun' | 'verb' | 'adjective' | null>(null);
+  const [pos, setPos] = useState<SearchPos | null>(null);
   const [showMoreExamplesIdx, setShowMoreExamplesIdx] = useState<number | null>(null);
 
-  const fetchResults = async (text: string, pageNum: number, posFilter: 'noun' | 'verb' | 'adjective' | null) => {
+  const fetchResults = async (text: string, pageNum: number, posFilter: SearchPos | null) => {
     if (!text.trim()) return;
     
     setIsLoading(true);
@@ -24,7 +24,7 @@ export const DictionaryPage: React.FC = () => {
     try {
       const apiService = ApiService.getInstance();
       // Request up to 50 results from API; we'll paginate client-side at 10 per page
-      const results = await apiService.searchDictionary(text, 50);
+      const results = await apiService.searchDictionary(text, 50, pageNum, posFilter);
       
       // Handle the new API response structure
       if (!results.success) {
@@ -49,12 +49,10 @@ export const DictionaryPage: React.FC = () => {
     await fetchResults(text, 1, pos);
   };
 
-  const handlePosChange = async (newPos: 'noun' | 'verb' | 'adjective' | null) => {
+  const handlePosChange = async (newPos: SearchPos | null) => {
     setPos(newPos);
     setPage(1);
-    if (query.trim()) {
-      await fetchResults(query, 1, newPos);
-    }
+    setPos(newPos);
   };
 
   const handlePageChange = async (nextPage: number) => {
@@ -90,15 +88,15 @@ export const DictionaryPage: React.FC = () => {
               id="pos-filter"
               value={pos ?? ''}
               onChange={(e) => {
-                const v = e.target.value as '' | 'noun' | 'verb' | 'adjective';
+                const v = e.target.value as '' | SearchPos;
                 handlePosChange(v === '' ? null : v);
               }}
               style={{ padding: '0.4rem 0.6rem', borderRadius: '6px', border: '1px solid #ddd' }}
             >
               <option value="">--</option>
-              <option value="noun">noun</option>
-              <option value="verb">verb</option>
-              <option value="adjective">adjective</option>
+              <option value={SearchPos.NOUN}>Noun</option>
+              <option value={SearchPos.VERB}>Verb</option>
+              <option value={SearchPos.ADJECTIVE}>Adjective</option>
             </select>
           </div>
           {isLoading && (

@@ -24,6 +24,14 @@ export interface SearchResult {
   variants: Array<{ word: string; reading: string }>;
 }
 
+export const SearchPos = {
+  NOUN: 'noun',
+  VERB: 'verb',
+  ADJECTIVE: 'adjective',
+} as const;
+
+export type SearchPos = typeof SearchPos[keyof typeof SearchPos];
+
 export interface SearchResponse {
   /** Indicates whether the search was successful */
   success: boolean;
@@ -127,11 +135,13 @@ class ApiService {
   }
 
   // Dictionary search
-  async searchDictionary(query: string, limit?: number): Promise<SearchResponse> {
+  async searchDictionary(query: string, limit?: number, page?: number, pos?: SearchPos | null): Promise<SearchResponse> {
     const response = await this.client.get<SearchResponse>(API_CONFIG.ENDPOINTS.SEARCH, {
       params: { 
         q: query,
-        ...(limit && { limit })
+        ...(limit && { limit }),
+        ...(page && { page }),
+        ...(pos && { pos }),
       }
     });
     return response.data;
