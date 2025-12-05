@@ -58,7 +58,7 @@ function convertRomajiSegmentToKana(input: string): string {
   const s = input;
 
   while (i < s.length) {
-    const rest = s.slice(i);
+    // const rest = s.slice(i); // Unused variable
 
     // Preserve existing kana as-is
     if (isKanaChar(s[i])) {

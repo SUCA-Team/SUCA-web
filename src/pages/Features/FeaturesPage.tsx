@@ -39,6 +39,19 @@ export const FeaturesPage: React.FC = () => {
               </div>
               
               <div className="feature-item">
+                <h2>🧠 FSRS Smart Scheduling</h2>
+                <p>
+                  Our flashcard system uses FSRS (Free Spaced Repetition Scheduler), 
+                  a cutting-edge algorithm that learns from your study patterns. It 
+                  calculates the optimal review time for each card based on your 
+                  individual memory retention, ensuring you review material right 
+                  before you'd forget it. This scientifically-proven method helps 
+                  you remember more while studying less, making your learning up to 
+                  3x more efficient than traditional methods.
+                </p>
+              </div>
+              
+              <div className="feature-item">
                 <h2>💬 Real-time Translation</h2>
                 <p>
                   Get instant translations with cultural context and usage examples.

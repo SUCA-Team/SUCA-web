@@ -12,7 +12,7 @@ interface Props {
 export const LoginModal: React.FC<Props> = ({ open, onClose }) => {
   const [mounted, setMounted] = useState<boolean>(open);
   const [isClosing, setIsClosing] = useState<boolean>(false);
-  const [mode, setMode] = useState<'login'|'signup'>('login');
+  const [mode, setMode] = useState<string>('login');
   const [viewSwitching, setViewSwitching] = useState<boolean>(false);
   const [isSigningIn, setIsSigningIn] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -280,10 +280,8 @@ export const LoginModal: React.FC<Props> = ({ open, onClose }) => {
               <button
                 className="secondary"
                 onClick={() => {
-                  if (mode !== 'login') {
-                    setViewSwitching(true);
-                    setTimeout(() => { setMode('login'); setViewSwitching(false); }, ANIM_MS);
-                  }
+                  setViewSwitching(true);
+                  setTimeout(() => { setMode('login'); setViewSwitching(false); }, ANIM_MS);
                 }}
               >
                 Already have an account? Log In
