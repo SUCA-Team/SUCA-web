@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import AudioButtonImg from '../../assets/AudioButton.png';
-import FlipKanjiReadingImg from '../../assets/FlipKanjiReading.png';
+// Replace flip button with a simple Copy action
 import AddButtonImg from '../../assets/AddButton.png';
 import { TranslationInput } from '../../components/common/TranslationInput';
 import ApiService, { type SearchResponse } from '../../services/apiService';
@@ -93,15 +93,51 @@ export const DictionaryPage: React.FC = () => {
                       >
                         {/* Kanji at top */}
                         <div style={{ width: '100%', textAlign: 'center', marginBottom: '0.5rem' }}>
-                          <strong style={{ fontSize: '60px', fontWeight: 700 }}>{result.word}</strong>
+                          {(() => {
+                            const HIRAGANA_RANGE = /[\u3040-\u309F]/;
+                            const KATAKANA_RANGE = /[\u30A0-\u30FF]/;
+                            const isKanaOnly = (s: string) => {
+                              if (!s) return false;
+                              for (const ch of s) {
+                                if (!(HIRAGANA_RANGE.test(ch) || KATAKANA_RANGE.test(ch))) {
+                                  return false;
+                                }
+                              }
+                              return true;
+                            };
+                            const word = result.word;
+                            const reading = result.reading;
+                            if (word && reading && !isKanaOnly(word)) {
+                              return (
+                                <ruby style={{ fontSize: '60px', fontWeight: 700 }}>
+                                  {word}
+                                  <rt style={{ fontSize: '18px', fontWeight: 500 }}>{reading}</rt>
+                                </ruby>
+                              );
+                            }
+                            return (<strong style={{ fontSize: '60px', fontWeight: 700 }}>{word}</strong>);
+                          })()}
                         </div>
                         {/* Icon buttons row */}
                         <div style={{ display: 'flex', justifyContent: 'center', gap: '1.2rem', marginBottom: '0.5rem' }}>
                           <button style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }} title="Play audio">
                             <img src={AudioButtonImg} alt="Audio" style={{ width: 28, height: 28 }} />
                           </button>
-                          <button style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }} title="Flip Kanji/Reading">
-                            <img src={FlipKanjiReadingImg} alt="Flip" style={{ width: 28, height: 28 }} />
+                          <button
+                            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                            title="Copy"
+                            onClick={() => {
+                              const textToCopy = result.word || '';
+                              if (navigator.clipboard) {
+                                void navigator.clipboard.writeText(textToCopy);
+                              }
+                            }}
+                          >
+                            {/* Simple copy glyph */}
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                              <rect x="3" y="3" width="13" height="13" rx="2" ry="2"></rect>
+                            </svg>
                           </button>
                           <button style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }} title="Add to list">
                             <img src={AddButtonImg} alt="Add" style={{ width: 28, height: 28 }} />
