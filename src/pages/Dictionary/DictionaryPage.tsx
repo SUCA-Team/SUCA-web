@@ -42,6 +42,8 @@ export const DictionaryPage: React.FC = () => {
       <div className="page-content">
         <h1 className="page-title">Dictionary</h1>
         <p className="page-body">Find any Japanese word in seconds.</p>
+      
+
         <section style={{marginTop: '1.5rem', width: '90vw'}}>
           <TranslationInput onTranslate={handleSearch} initialTab="search" hideTabs={true} />
           

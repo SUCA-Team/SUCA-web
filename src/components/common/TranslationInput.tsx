@@ -141,9 +141,7 @@ export const TranslationInput: React.FC<TranslationInputProps> = ({ onTranslate,
             onChange={handleInputChange}
             onFocus={handleInputFocus}
             placeholder={
-              activeTab === 'translate' 
-                ? 'Translate a phrase...' 
-                : 'Search for Japanese words...'
+                'Japanese, Romaji, or English (needs quotes for English search)'
             }
             className="input translation-input"
           />
