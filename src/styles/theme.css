@@ -154,19 +154,17 @@ body {
   box-shadow: var(--shadow-hover);
 }
 
-/* Page-specific text color: dark red for Dictionary / Flashcard / Multiplayer */
+/* Page-specific text color: dark red for Dictionary / Flashcard */
 .page-dictionary,
 .page-flashcard,
-.page-translate,
-.page-multiplayer {
+.page-translate {
   color: #8a0b0b;
 }
 
 /* Ensure common page text elements inherit the page color */
 .page-dictionary .page-content *,
 .page-flashcard .page-content *,
-.page-translate .page-content *,
-.page-multiplayer .page-content * {
+.page-translate .page-content * {
   color: inherit;
 }
 

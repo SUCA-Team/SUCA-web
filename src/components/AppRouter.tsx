@@ -6,8 +6,11 @@ import { AboutPage } from '../pages/About/AboutPage';
 import { FeaturesPage } from '../pages/Features/FeaturesPage';
 import DictionaryPage from '../pages/Dictionary/DictionaryPage';
 import FlashcardPage from '../pages/Flashcard/FlashcardPage';
-import MultiplayerPage from '../pages/Multiplayer/MultiplayerPage';
 import LoginPage from '../pages/Login/LoginPage';
+import HelpPage from '../pages/Help/HelpPage';
+import PrivacyPage from '../pages/Privacy/PrivacyPage';
+import TermsPage from '../pages/Terms/TermsPage';
+import ContactPage from '../pages/Contact/ContactPage';
 import Footer from '../components/layout/Footer';
 
 export const AppRouter: React.FC = () => {
@@ -22,8 +25,12 @@ export const AppRouter: React.FC = () => {
           <Route path="/dictionary" element={<DictionaryPage />} />
           {/** Translate page removed */}
           <Route path="/flashcard" element={<FlashcardPage />} />
-          <Route path="/multiplayer" element={<MultiplayerPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/help" element={<HelpPage />} />
+          <Route path="/faq" element={<HelpPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/contact" element={<ContactPage />} />
         </Routes>
         <Footer />
       </div>

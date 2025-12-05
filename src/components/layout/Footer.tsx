@@ -19,12 +19,11 @@ export const Footer: React.FC = () => {
 
         <div className="footer-column">
           <h4>OTHER</h4>
-          <button className="footer-link">About us</button>
-          <button className="footer-link">Settings</button>
-          <button className="footer-link">Privacy policy</button>
-          <button className="footer-link">Legal terms</button>
-          <button className="footer-link">FAQ</button>
-          <button className="footer-link">Contact us</button>
+          <Link to="/about" className="footer-link">About us</Link>
+          <Link to="/privacy" className="footer-link">Privacy policy</Link>
+          <Link to="/terms" className="footer-link">Legal terms</Link>
+          <Link to="/faq" className="footer-link">FAQ</Link>
+          <Link to="/contact" className="footer-link">Contact us</Link>
         </div>
       </div>
 
