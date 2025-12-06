@@ -1,6 +1,37 @@
 import axios from 'axios';
 import type { AxiosInstance } from 'axios';
 import { API_CONFIG } from '../config/api';
+import { auth } from '../firebase';
+
+
+export interface DeckResponse {
+  id: number;
+  name: string;
+  description?: string | null;
+  user_id: string;
+  is_public: boolean;
+  created_at: string;
+  updated_at: string;
+  flashcard_count: number;
+}
+
+export interface DeckCreate {
+  name: string;
+  description?: string | null;
+  is_public?: boolean | null;
+}
+
+export interface DeckListResponse {
+  decks: DeckResponse[];
+  total_count: number;
+}
+
+export interface DeckUpdate {
+  name?: string | null;
+  description?: string | null;
+  is_public?: boolean | null;
+}
+
 
 export interface TranslationResponse {
   original: string;
@@ -74,12 +105,25 @@ class ApiService {
 
     // Request interceptor
     this.client.interceptors.request.use(
-      (config) => {
-        // Attach auth token if present
-        const token = localStorage.getItem('suca_access_token');
-        if (token) {
-          config.headers = config.headers ?? {};
-          (config.headers as any)['Authorization'] = `Bearer ${token}`;
+      async (config) => {
+        // Skip adding token only for register and login endpoints
+        const publicAuthEndpoints = ['/v1/auth/verify', '/v1/auth/refresh'];
+        const isPublicAuth = publicAuthEndpoints.some(endpoint => config.url === endpoint);
+        
+        if (isPublicAuth) {
+          console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`);
+          return config;
+        }
+
+        // Get Firebase ID token if user is authenticated
+        if (auth?.currentUser) {
+          try {
+            const token = await auth.currentUser.getIdToken();
+            config.headers = config.headers ?? {};
+            config.headers['Authorization'] = `Bearer ${token}`;
+          } catch (error) {
+            console.error('Failed to get Firebase token:', error);
+          }
         }
         console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`);
         return config;
@@ -181,6 +225,31 @@ class ApiService {
   async getCurrentUser(): Promise<{ user_id: string; username: string; email: string }> {
     const response = await this.client.get('/v1/auth/me');
     return response.data;
+  }
+
+  // Deck management
+  async createDeck(deckData: DeckCreate): Promise<DeckResponse> {
+    const response = await this.client.post<DeckResponse>('/v1/flashcard/decks/', deckData);
+    return response.data;
+  }
+
+  async listDecks(): Promise<DeckListResponse> {
+    const response = await this.client.get<DeckListResponse>('/v1/flashcard/decks/');
+    return response.data;
+  }
+
+  async getDeck(deckId: number): Promise<DeckResponse> {
+    const response = await this.client.get<DeckResponse>(`/v1/flashcard/decks/${deckId}`);
+    return response.data;
+  }
+
+  async updateDeck(deckId: number, deckData: DeckUpdate): Promise<DeckResponse> {
+    const response = await this.client.put<DeckResponse>(`/v1/flashcard/decks/${deckId}`, deckData);
+    return response.data;
+  }
+
+  async deleteDeck(deckId: number): Promise<void> {
+    await this.client.delete(`/v1/flashcard/decks/${deckId}`);
   }
 }
 
