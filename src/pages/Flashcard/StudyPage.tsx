@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import ApiService, { type FlashcardResponse } from '../../services/apiService';
+import useAuth from '../../hooks/useAuth';
 
 // Helper function to decode example from back field
 const decodeBackWithExample = (encodedBack: string): { back: string; example?: string } => {
@@ -19,6 +20,7 @@ type StudyMode = 'selection' | 'manual' | 'session' | 'complete';
 export const StudyPage: React.FC = () => {
   const navigate = useNavigate();
   const { deckId } = useParams<{ deckId: string }>();
+  const auth = useAuth();
   const [mode, setMode] = useState<StudyMode>('selection');
   const [deckName, setDeckName] = useState('');
   const [allCards, setAllCards] = useState<FlashcardResponse[]>([]);
@@ -36,6 +38,11 @@ export const StudyPage: React.FC = () => {
         return;
       }
 
+      // Wait for auth to finish loading
+      if (auth?.loading) {
+        return;
+      }
+
       try {
         const api = ApiService.getInstance();
         const deck = await api.getDeck(Number(deckId));
@@ -48,11 +55,16 @@ export const StudyPage: React.FC = () => {
     };
 
     loadDeck();
-  }, [deckId, navigate]);
+  }, [deckId, navigate, auth?.loading]);
 
   useEffect(() => {
     const loadCards = async () => {
       if (mode !== 'manual' || !deckId) return;
+
+      // Wait for auth to finish loading
+      if (auth?.loading) {
+        return;
+      }
 
       setIsLoading(true);
       try {
@@ -68,7 +80,7 @@ export const StudyPage: React.FC = () => {
     };
 
     loadCards();
-  }, [mode, deckId]);
+  }, [mode, deckId, auth?.loading]);
 
   const handleModeSelect = (selectedMode: 'manual' | 'fsrs') => {
     if (selectedMode === 'manual') {
