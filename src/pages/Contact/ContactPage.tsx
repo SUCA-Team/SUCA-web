@@ -1,14 +1,36 @@
 import React, { useState } from 'react';
 import './ContactPage.css';
+import { submitContactMessage } from '../../services/contactService';
+import useAuth from '../../hooks/useAuth';
+import { Link } from 'react-router-dom';
 
 export const ContactPage: React.FC = () => {
   const [formData, setFormData] = useState({
     name: '',
-    email: '',
     subject: '',
-    message: ''
+    message: '',
+    honeypot: '' // Hidden field for bot detection
   });
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const auth = useAuth();
+  const user = auth?.user ?? null;
+
+  // Rate limiting: Check if user has submitted recently
+  const checkRateLimit = (): boolean => {
+    const lastSubmission = localStorage.getItem('lastContactSubmission');
+    if (lastSubmission) {
+      const timeSinceLastSubmission = Date.now() - parseInt(lastSubmission);
+      const minInterval = 60000; // 1 minute between submissions
+      if (timeSinceLastSubmission < minInterval) {
+        const secondsRemaining = Math.ceil((minInterval - timeSinceLastSubmission) / 1000);
+        setError(`Please wait ${secondsRemaining} seconds before submitting another message.`);
+        return false;
+      }
+    }
+    return true;
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({
@@ -17,17 +39,56 @@ export const ContactPage: React.FC = () => {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement actual form submission to backend
-    console.log('Form submitted:', formData);
-    setSubmitted(true);
+    setIsSubmitting(true);
+    setError(null);
     
-    // Reset form after 3 seconds
-    setTimeout(() => {
-      setFormData({ name: '', email: '', subject: '', message: '' });
-      setSubmitted(false);
-    }, 3000);
+    // Check if user is authenticated
+    if (!user) {
+      setError('You must be logged in to send a message.');
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Honeypot check - if filled, it's likely a bot
+    if (formData.honeypot) {
+      console.warn('Bot detected via honeypot field');
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Rate limiting check
+    if (!checkRateLimit()) {
+      setIsSubmitting(false);
+      return;
+    }
+    
+    try {
+      await submitContactMessage({
+        name: formData.name,
+        subject: formData.subject,
+        message: formData.message,
+        userId: user.uid,
+        userEmail: user.email || 'no-email@provided.com'
+      });
+      
+      // Store submission timestamp for rate limiting
+      localStorage.setItem('lastContactSubmission', Date.now().toString());
+      
+      setSubmitted(true);
+      
+      // Reset form after 3 seconds
+      setTimeout(() => {
+        setFormData({ name: '', subject: '', message: '', honeypot: '' });
+        setSubmitted(false);
+      }, 3000);
+    } catch (err) {
+      console.error('Error submitting form:', err);
+      setError(err instanceof Error ? err.message : 'Failed to submit message. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -45,14 +106,7 @@ export const ContactPage: React.FC = () => {
                 <h2>Get in Touch</h2>
                 <div className="contact-method">
                   <h3>📧 Email</h3>
-                  <p><strong>General Inquiries:</strong> hello@suca.app</p>
-                  <p><strong>Support:</strong> support@suca.app</p>
-                  <p><strong>Legal:</strong> legal@suca.app</p>
-                </div>
-
-                <div className="contact-method">
-                  <h3>⏱️ Response Time</h3>
-                  <p>We typically respond within 24-48 hours during business days.</p>
+                  <p>sucateam1111@gmail.com</p>
                 </div>
 
                 <div className="contact-method">
@@ -68,6 +122,30 @@ export const ContactPage: React.FC = () => {
 
               <div className="contact-form-container">
                 <h2>Send Us a Message</h2>
+                {!user && (
+                  <div className="info-message" style={{ 
+                    backgroundColor: '#e3f2fd', 
+                    border: '1px solid #90caf9', 
+                    padding: '1rem', 
+                    borderRadius: '8px',
+                    marginBottom: '1rem',
+                    color: '#1565c0'
+                  }}>
+                    <p>ℹ️ You must be logged in to send us a message. Please <Link to="/login" style={{ color: '#c8102e', textDecoration: 'underline' }}>log in</Link> or sign up to continue.</p>
+                  </div>
+                )}
+                {error && (
+                  <div className="error-message" style={{ 
+                    backgroundColor: '#fee', 
+                    border: '1px solid #fcc', 
+                    padding: '1rem', 
+                    borderRadius: '8px',
+                    marginBottom: '1rem',
+                    color: '#c00'
+                  }}>
+                    <p>❌ {error}</p>
+                  </div>
+                )}
                 {submitted ? (
                   <div className="success-message">
                     <h3>✅ Message Sent!</h3>
@@ -75,6 +153,18 @@ export const ContactPage: React.FC = () => {
                   </div>
                 ) : (
                   <form className="contact-form" onSubmit={handleSubmit}>
+                    {/* Honeypot field - hidden from users, but bots will fill it */}
+                    <input
+                      type="text"
+                      name="honeypot"
+                      value={formData.honeypot}
+                      onChange={handleChange}
+                      style={{ display: 'none' }}
+                      tabIndex={-1}
+                      autoComplete="off"
+                      aria-hidden="true"
+                    />
+                    
                     <div className="form-group">
                       <label htmlFor="name">Name *</label>
                       <input
@@ -85,19 +175,7 @@ export const ContactPage: React.FC = () => {
                         onChange={handleChange}
                         required
                         placeholder="Your name"
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label htmlFor="email">Email *</label>
-                      <input
-                        type="email"
-                        id="email"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleChange}
-                        required
-                        placeholder="your.email@example.com"
+                        disabled={isSubmitting || !user}
                       />
                     </div>
 
@@ -109,6 +187,7 @@ export const ContactPage: React.FC = () => {
                         value={formData.subject}
                         onChange={handleChange}
                         required
+                        disabled={isSubmitting || !user}
                       >
                         <option value="">Select a subject</option>
                         <option value="general">General Inquiry</option>
@@ -130,11 +209,12 @@ export const ContactPage: React.FC = () => {
                         required
                         rows={6}
                         placeholder="Tell us how we can help..."
+                        disabled={isSubmitting || !user}
                       />
                     </div>
 
-                    <button type="submit" className="submit-btn">
-                      Send Message
+                    <button type="submit" className="submit-btn" disabled={isSubmitting || !user}>
+                      {isSubmitting ? 'Sending...' : !user ? 'Login Required' : 'Send Message'}
                     </button>
                   </form>
                 )}

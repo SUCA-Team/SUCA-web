@@ -1,11 +1,29 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import LoginModal from '../../components/common/LoginModal';
+import useAuth from '../../hooks/useAuth';
 
 export const LoginPage: React.FC = () => {
+  const navigate = useNavigate();
+  const auth = useAuth();
+  const user = auth?.user ?? null;
+
+  // If user is already logged in, redirect to home
+  useEffect(() => {
+    if (user) {
+      navigate('/');
+    }
+  }, [user, navigate]);
+
+  const handleClose = () => {
+    // Navigate back to previous page or home
+    navigate(-1);
+  };
+
   return (
-    <main style={{padding: '2rem'}}>
-      <h1>Log In</h1>
-      <p>Placeholder page for Login.</p>
-    </main>
+    <>
+      <LoginModal open={true} onClose={handleClose} />
+    </>
   );
 };
 
