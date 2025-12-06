@@ -66,7 +66,7 @@ export const AboutPage: React.FC = () => {
               <p>
                 Have questions or feedback? We'd love to hear from you! Visit our 
                 <a href="/contact" style={{ color: '#c8102e', marginLeft: '0.25rem' }}>Contact page</a> or 
-                email us at <strong>hello@suca.app</strong>
+                email us at <strong>sucateam1111@gmail.com</strong>
               </p>
             </section>
           </div>

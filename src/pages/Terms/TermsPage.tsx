@@ -123,7 +123,7 @@ export const TermsPage: React.FC = () => {
               <p>
                 For questions about these Terms of Service, contact us at:
                 <br />
-                <strong>Email:</strong> legal@suca.app
+                <strong>Email:</strong> <strong>sucateam1111@gmail.com</strong>
               </p>
             </section>
           </div>

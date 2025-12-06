@@ -84,7 +84,7 @@ export const HelpPage: React.FC = () => {
               <h2>Need More Help?</h2>
               <p>
                 If you have additional questions or need technical support, please visit our 
-                <a href="/contact"> Contact page</a> or email us at support@suca.app
+                <a href="/contact"> Contact page</a> or email us at <strong>sucateam1111@gmail.com</strong>.
               </p>
             </div>
           </div>
