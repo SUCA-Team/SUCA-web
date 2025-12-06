@@ -73,7 +73,7 @@ export const Header: React.FC = () => {
     } catch {
       setSucaUser(null);
     }
-  }, [open]);
+  }, [user, open]);
 
   return (
     <>

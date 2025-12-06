@@ -97,7 +97,7 @@ export const PrivacyPage: React.FC = () => {
               <p>
                 If you have any questions about this Privacy Policy, please contact us at:
                 <br />
-                <strong>Email:</strong> privacy@suca.app
+                <strong>Email:</strong> <strong>sucateam1111@gmail.com</strong>
               </p>
             </section>
           </div>

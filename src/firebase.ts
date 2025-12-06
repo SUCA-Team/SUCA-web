@@ -1,5 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
 
 // Import the functions you need from the SDKs you need
 import { getAnalytics } from "firebase/analytics";
@@ -43,11 +44,13 @@ const isConfigured = Boolean(firebaseConfig.apiKey && firebaseConfig.authDomain)
 
 let auth: ReturnType<typeof getAuth> | null = null;
 let googleProvider: GoogleAuthProvider | null = null;
+let db: ReturnType<typeof getFirestore> | null = null;
 
 if (isConfigured) {
   const app = initializeApp(firebaseConfig);
   auth = getAuth(app);
   googleProvider = new GoogleAuthProvider();
+  db = getFirestore(app);
 }
 
 export async function signInWithGooglePopup() {
@@ -63,4 +66,4 @@ export async function signOutUser() {
   await signOut(auth);
 }
 
-export { auth };
+export { auth, db };
