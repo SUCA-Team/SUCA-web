@@ -1,6 +1,6 @@
 // API Configuration
 export const API_CONFIG = {
-  BASE_URL: import.meta.env.PROD ? 'https://your-api-domain.com' : '/api',
+  BASE_URL: import.meta.env.PROD ? '/api' : 'http://localhost:8000/api',
   ENDPOINTS: {
     HEALTH: '/v1/health',
     SEARCH: '/v1/search',

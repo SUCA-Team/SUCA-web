@@ -313,7 +313,7 @@ export const DictionaryPage: React.FC = () => {
                                   <rect x="3" y="3" width="13" height="13" rx="2" ry="2"></rect>
                                 </svg>
                               </button>
-                              <button style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }} title="Add to list">
+                              <button style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }} title="Add to Deck">
                                 <img src={AddButtonImg} alt="Add" style={{ width: 28, height: 28 }} />
                               </button>
                             </div>

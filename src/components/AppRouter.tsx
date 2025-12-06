@@ -6,6 +6,8 @@ import { AboutPage } from '../pages/About/AboutPage';
 import { FeaturesPage } from '../pages/Features/FeaturesPage';
 import DictionaryPage from '../pages/Dictionary/DictionaryPage';
 import FlashcardPage from '../pages/Flashcard/FlashcardPage';
+import AddDeckPage from '../pages/Flashcard/AddDeckPage';
+import EditDeckPage from '../pages/Flashcard/EditDeckPage';
 import LoginPage from '../pages/Login/LoginPage';
 import HelpPage from '../pages/Help/HelpPage';
 import PrivacyPage from '../pages/Privacy/PrivacyPage';
@@ -25,6 +27,8 @@ export const AppRouter: React.FC = () => {
           <Route path="/dictionary" element={<DictionaryPage />} />
           {/** Translate page removed */}
           <Route path="/flashcard" element={<FlashcardPage />} />
+          <Route path="/flashcard/add" element={<AddDeckPage />} />
+          <Route path="/flashcard/edit/:deckId" element={<EditDeckPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/help" element={<HelpPage />} />
           <Route path="/faq" element={<HelpPage />} />
