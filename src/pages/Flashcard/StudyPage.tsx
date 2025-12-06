@@ -30,6 +30,9 @@ export const StudyPage: React.FC = () => {
   const [isFlipped, setIsFlipped] = useState(false);
   const [cardsStudied, setCardsStudied] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [dueCardCount, setDueCardCount] = useState(0);
+  const [againCards, setAgainCards] = useState<FlashcardResponse[]>([]);
+  const [isRetryPhase, setIsRetryPhase] = useState(false);
 
   useEffect(() => {
     const loadDeck = async () => {
@@ -45,8 +48,12 @@ export const StudyPage: React.FC = () => {
 
       try {
         const api = ApiService.getInstance();
-        const deck = await api.getDeck(Number(deckId));
+        const [deck, dueCards] = await Promise.all([
+          api.getDeck(Number(deckId)),
+          api.getDeckDueCards(Number(deckId))
+        ]);
         setDeckName(deck.name);
+        setDueCardCount(dueCards.flashcards.length);
       } catch (e) {
         console.error('Failed to load deck:', e);
         alert('Failed to load deck');
@@ -82,11 +89,37 @@ export const StudyPage: React.FC = () => {
     loadCards();
   }, [mode, deckId, auth?.loading]);
 
-  const handleModeSelect = (selectedMode: 'manual' | 'fsrs') => {
+  const handleModeSelect = async (selectedMode: 'manual' | 'fsrs') => {
     if (selectedMode === 'manual') {
       setMode('manual');
     } else {
-      alert('FSRS SUCA mode coming soon!');
+      // FSRS mode - load due cards and start session
+      if (dueCardCount === 0) {
+        alert('No cards are due for review at this time!');
+        return;
+      }
+      
+      setIsLoading(true);
+      try {
+        const api = ApiService.getInstance();
+        const dueCardsRes = await api.getDeckDueCards(Number(deckId));
+        
+        // Randomize the cards
+        const shuffled = [...dueCardsRes.flashcards].sort(() => Math.random() - 0.5);
+        
+        setStudyCards(shuffled);
+        setCurrentCardIndex(0);
+        setIsFlipped(false);
+        setCardsStudied(0);
+        setAgainCards([]);
+        setIsRetryPhase(false);
+        setMode('session');
+      } catch (e) {
+        console.error('Failed to load due cards:', e);
+        alert('Failed to load due cards');
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -167,10 +200,15 @@ export const StudyPage: React.FC = () => {
     }
 
     const selected = allCards.filter(c => selectedCardIds.has(c.id));
-    setStudyCards(selected);
+    // Randomize the cards
+    const shuffled = [...selected].sort(() => Math.random() - 0.5);
+    
+    setStudyCards(shuffled);
     setCurrentCardIndex(0);
     setIsFlipped(false);
     setCardsStudied(0);
+    setAgainCards([]);
+    setIsRetryPhase(false);
     setMode('session');
   };
 
@@ -187,11 +225,29 @@ export const StudyPage: React.FC = () => {
       const api = ApiService.getInstance();
       await api.reviewFlashcard(Number(deckId), currentCard.id, { rating });
       
-      setCardsStudied(prev => prev + 1);
+      // If rating is "Again" (1), add to retry list
+      if (rating === 1) {
+        setAgainCards(prev => [...prev, currentCard]);
+        // Don't increment cardsStudied for "Again" rating
+      } else {
+        // Only increment progress for non-Again ratings
+        setCardsStudied(prev => prev + 1);
+      }
       
-      // Check if this was the last card
+      // Check if this was the last card in current phase
       if (currentCardIndex === studyCards.length - 1) {
-        setMode('complete');
+        // If there are cards that need retry and not already in retry phase
+        if (againCards.length > 0 && !isRetryPhase) {
+          // Start retry phase with Again cards
+          setStudyCards(againCards);
+          setAgainCards([]);
+          setCurrentCardIndex(0);
+          setIsFlipped(false);
+          setIsRetryPhase(true);
+        } else {
+          // No more cards to retry, complete the session
+          setMode('complete');
+        }
       } else {
         setCurrentCardIndex(prev => prev + 1);
         setIsFlipped(false);
@@ -219,14 +275,38 @@ export const StudyPage: React.FC = () => {
   if (mode === 'selection') {
     return (
       <main className="page" style={{ background: '#f5f5f5', minHeight: '100vh', padding: '2rem' }}>
-        <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
+        <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center', position: 'relative' }}>
+          {/* Back Button - top right */}
+          <button
+            onClick={handleBackToHome}
+            style={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              background: '#c2185b',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '0.5rem 1.2rem',
+              cursor: 'pointer',
+              fontWeight: 700,
+              fontSize: '1rem',
+              boxShadow: '0 2px 8px rgba(194,24,91,0.15)',
+              transition: 'background 0.2s',
+              zIndex: 2,
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = '#ad1457'}
+            onMouseLeave={e => e.currentTarget.style.background = '#c2185b'}
+          >
+            ← Back
+          </button>
           <h1 style={{ fontSize: '2.5rem', fontWeight: 700, marginBottom: '1rem' }}>
             Study: {deckName}
           </h1>
           <p style={{ fontSize: '1.2rem', color: '#666', marginBottom: '3rem' }}>
             Are you ready to SUCA? Choose your option below.
           </p>
-          <div style={{ display: 'flex', gap: '2rem', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', gap: '2rem', justifyContent: 'center', marginBottom: '2rem' }}>
             <button
               onClick={() => handleModeSelect('manual')}
               style={{
@@ -260,6 +340,39 @@ export const StudyPage: React.FC = () => {
               FSRS SUCA
             </button>
           </div>
+          <div style={{
+            background: '#fff',
+            borderRadius: '16px',
+            padding: '1.5rem 2rem',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '1rem',
+            maxWidth: '400px',
+            margin: '0 auto',
+          }}>
+            <div style={{
+              width: '50px',
+              height: '50px',
+              background: '#e3f2fd',
+              borderRadius: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '1.5rem',
+            }}>
+              📚
+            </div>
+            <div style={{ textAlign: 'left' }}>
+              <div style={{ fontSize: '0.9rem', color: '#666', marginBottom: '0.25rem' }}>
+                Due Cards
+              </div>
+              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#2196F3' }}>
+                {dueCardCount}
+              </div>
+            </div>
+          </div>
         </div>
       </main>
     );
@@ -269,24 +382,32 @@ export const StudyPage: React.FC = () => {
   if (mode === 'manual') {
     return (
       <main className="page" style={{ background: '#f5f5f5', minHeight: '100vh', padding: '2rem' }}>
-        <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '2rem' }}>
-            <button
-              onClick={handleBackToSelection}
-              style={{
-                background: '#9e9e9e',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '0.5rem 1rem',
-                cursor: 'pointer',
-                fontWeight: 600,
-                marginRight: '1rem',
-              }}
-            >
-              ← Back
-            </button>
-            <h1 style={{ margin: 0, fontSize: '2rem', fontWeight: 700 }}>
+        <div style={{ maxWidth: '1000px', margin: '0 auto', position: 'relative' }}>
+          <button
+            onClick={handleBackToSelection}
+            style={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              background: '#c2185b',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '0.5rem 1.2rem',
+              cursor: 'pointer',
+              fontWeight: 700,
+              fontSize: '1rem',
+              boxShadow: '0 2px 8px rgba(194,24,91,0.15)',
+              transition: 'background 0.2s',
+              zIndex: 2,
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = '#ad1457'}
+            onMouseLeave={e => e.currentTarget.style.background = '#c2185b'}
+          >
+            ← Back
+          </button>
+          <div style={{ marginBottom: '2rem', minHeight: '2.5rem' }}>
+            <h1 style={{ margin: 0, fontSize: '2rem', fontWeight: 700, textAlign: 'center' }}>
               Select Cards to Study
             </h1>
           </div>
@@ -410,11 +531,36 @@ export const StudyPage: React.FC = () => {
   if (mode === 'session') {
     const currentCard = studyCards[currentCardIndex];
     const { back, example } = decodeBackWithExample(currentCard.back);
-    const progress = ((currentCardIndex) / studyCards.length) * 100;
+    const totalCardsInSession = studyCards.length;
+    const progress = (cardsStudied / totalCardsInSession) * 100;
 
     return (
       <main className="page" style={{ background: '#f5f5f5', minHeight: '100vh', padding: '2rem' }}>
         <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+          {/* Back Button - top right */}
+          <button
+            onClick={handleBackToSelection}
+            style={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              background: '#c2185b',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '0.5rem 1.2rem',
+              cursor: 'pointer',
+              fontWeight: 700,
+              fontSize: '1rem',
+              boxShadow: '0 2px 8px rgba(194,24,91,0.15)',
+              transition: 'background 0.2s',
+              zIndex: 2,
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = '#ad1457'}
+            onMouseLeave={e => e.currentTarget.style.background = '#c2185b'}
+          >
+            ← Back
+          </button>
           {/* Progress Bar */}
           <div style={{
             background: '#fff',
@@ -422,10 +568,14 @@ export const StudyPage: React.FC = () => {
             padding: '1.5rem',
             boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
             marginBottom: '2rem',
+            position: 'relative',
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
               <span style={{ fontWeight: 600, color: '#666' }}>Progress</span>
-              <span style={{ fontWeight: 700 }}>{currentCardIndex + 1} of {studyCards.length} cards</span>
+              <span style={{ fontWeight: 700 }}>
+                {currentCardIndex + 1} of {studyCards.length} cards
+                {isRetryPhase && <span style={{ color: '#f44336', marginLeft: '0.5rem' }}>(Retry)</span>}
+              </span>
             </div>
             <div style={{
               width: '100%',

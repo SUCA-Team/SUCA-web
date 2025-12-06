@@ -17,16 +17,16 @@ const encodeBackWithExample = (back: string, example?: string): string => {
   return `${back} {${example}}`;
 };
 
-const decodeBackWithExample = (encodedBack: string): { back: string; example?: string } => {
-  const match = encodedBack.match(/^(.*?)\s*\{(.*?)\}$/);
-  if (match) {
-    return {
-      back: match[1].trim(),
-      example: match[2].trim(),
-    };
-  }
-  return { back: encodedBack };
-};
+// const decodeBackWithExample = (encodedBack: string): { back: string; example?: string } => {
+//   const match = encodedBack.match(/^(.*?)\s*\{(.*?)\}$/);
+//   if (match) {
+//     return {
+//       back: match[1].trim(),
+//       example: match[2].trim(),
+//     };
+//   }
+//   return { back: encodedBack };
+// };
 
 export const AddDeckPage: React.FC = () => {
   const navigate = useNavigate();

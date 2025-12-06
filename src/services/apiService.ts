@@ -423,6 +423,11 @@ class ApiService {
     return response.data;
   }
 
+  async getDeckDueCards(deckId: number): Promise<FlashcardListResponse> {
+    const response = await this.client.get<FlashcardListResponse>(`/v1/flashcard/decks/${deckId}/due`);
+    return response.data;
+  }
+
   // CSV import
   async importFlashcardsFromCSV(deckId: number, file: File): Promise<BulkOperationResponse> {
     const formData = new FormData();
