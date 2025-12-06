@@ -493,6 +493,23 @@ export const StudyPage: React.FC = () => {
     return (
       <main className="page" style={{ background: '#f5f5f5', minHeight: '100vh', padding: '2rem' }}>
         <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+          {/* Back Button */}
+          <div style={{ marginBottom: '1rem' }}>
+            <button
+              onClick={handleBackToSelection}
+              style={{
+                background: '#9e9e9e',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '0.5rem 1rem',
+                cursor: 'pointer',
+                fontWeight: 600,
+              }}
+            >
+              ← Back
+            </button>
+          </div>
           {/* Progress Bar */}
           <div style={{
             background: '#fff',
