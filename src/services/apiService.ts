@@ -32,6 +32,105 @@ export interface DeckUpdate {
   is_public?: boolean | null;
 }
 
+export interface FlashcardResponse {
+  front: string;
+  back: string;
+  id: number;
+  deck_id: number;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+  difficulty: number;
+  stability: number;
+  reps: number;
+  state: number;
+  last_review?: string | null;
+  due: string;
+  retrievability?: number;
+}
+
+export interface FlashcardCreate {
+  front: string;
+  back: string;
+}
+
+export interface FlashcardUpdate {
+  front?: string | null;
+  back?: string | null;
+}
+
+export interface FlashcardListResponse {
+  flashcards: FlashcardResponse[];
+  total_count: number;
+}
+
+export interface FlashcardReviewRequest {
+  rating: number; // 1-4
+}
+
+export interface FlashcardReviewResponse {
+  front: string;
+  back: string;
+  id: number;
+  deck_id: number;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+  difficulty: number;
+  stability: number;
+  reps: number;
+  state: number;
+  last_review?: string | null;
+  due: string;
+  retrievability?: number;
+}
+
+export interface BulkCreateRequest {
+  cards: Array<{ front: string; back: string }>; // max 100 items
+}
+
+export interface BulkDeleteRequest {
+  card_ids: number[]; // >= 1 items
+}
+
+export interface BulkMoveRequest {
+  card_ids: number[]; // >= 1 items
+  target_deck_id: number;
+}
+
+export interface BulkUpdateRequest {
+  updates: Array<{
+    id: number;
+    front?: string | null;
+    back?: string | null;
+  }>; // [1, 100] items
+}
+
+export interface BulkResetRequest {
+  card_ids: number[]; // >= 1 items
+}
+
+export interface BulkOperationResponse {
+  success: boolean;
+  processed_count: number;
+  failed_count?: number;
+  message?: string;
+  errors?: string[];
+}
+
+export interface DueCardsResponse {
+  decks: Array<{
+    deck_id: number;
+    deck_name: string;
+    total_cards: number;
+    new_cards: number;
+    learning_cards: number;
+    review_cards: number;
+    due_cards: number;
+  }>;
+  total_due: number;
+}
+
 
 export interface TranslationResponse {
   original: string;
@@ -250,6 +349,84 @@ class ApiService {
 
   async deleteDeck(deckId: number): Promise<void> {
     await this.client.delete(`/v1/flashcard/decks/${deckId}`);
+  }
+
+  // Flashcard management
+  async createFlashcard(deckId: number, flashcardData: FlashcardCreate): Promise<FlashcardResponse> {
+    const response = await this.client.post<FlashcardResponse>(`/v1/flashcard/decks/${deckId}/cards/`, flashcardData);
+    return response.data;
+  }
+
+  async listFlashcards(deckId: number): Promise<FlashcardListResponse> {
+    const response = await this.client.get<FlashcardListResponse>(`/v1/flashcard/decks/${deckId}/cards/`);
+    return response.data;
+  }
+
+  async getFlashcard(deckId: number, flashcardId: number): Promise<FlashcardResponse> {
+    const response = await this.client.get<FlashcardResponse>(`/v1/flashcard/decks/${deckId}/cards/${flashcardId}`);
+    return response.data;
+  }
+
+  async updateFlashcard(deckId: number, flashcardId: number, flashcardData: FlashcardUpdate): Promise<FlashcardResponse> {
+    const response = await this.client.put<FlashcardResponse>(`/v1/flashcard/decks/${deckId}/cards/${flashcardId}`, flashcardData);
+    return response.data;
+  }
+
+  async deleteFlashcard(deckId: number, flashcardId: number): Promise<void> {
+    await this.client.delete(`/v1/flashcard/decks/${deckId}/cards/${flashcardId}`);
+  }
+
+  async reviewFlashcard(deckId: number, flashcardId: number, reviewData: FlashcardReviewRequest): Promise<FlashcardReviewResponse> {
+    const response = await this.client.post<FlashcardReviewResponse>(`/v1/flashcard/decks/${deckId}/cards/${flashcardId}/review`, reviewData);
+    return response.data;
+  }
+
+  // Bulk operations
+  async bulkCreateFlashcards(deckId: number, bulkData: BulkCreateRequest): Promise<BulkOperationResponse> {
+    const response = await this.client.post<BulkOperationResponse>(`/v1/flashcard/decks/${deckId}/cards/bulk-create`, bulkData);
+    return response.data;
+  }
+
+  async bulkDeleteFlashcards(deckId: number, bulkData: BulkDeleteRequest): Promise<BulkOperationResponse> {
+    const response = await this.client.post<BulkOperationResponse>(`/v1/flashcard/decks/${deckId}/cards/bulk-delete`, bulkData);
+    return response.data;
+  }
+
+  async bulkMoveFlashcards(deckId: number, bulkData: BulkMoveRequest): Promise<BulkOperationResponse> {
+    const response = await this.client.post<BulkOperationResponse>(`/v1/flashcard/decks/${deckId}/cards/bulk-move`, bulkData);
+    return response.data;
+  }
+
+  async bulkUpdateFlashcards(deckId: number, bulkData: BulkUpdateRequest): Promise<BulkOperationResponse> {
+    const response = await this.client.post<BulkOperationResponse>(`/v1/flashcard/decks/${deckId}/cards/bulk-update`, bulkData);
+    return response.data;
+  }
+
+  async bulkResetFlashcards(deckId: number, bulkData: BulkResetRequest): Promise<BulkOperationResponse> {
+    const response = await this.client.post<BulkOperationResponse>(`/v1/flashcard/decks/${deckId}/cards/bulk-reset`, bulkData);
+    return response.data;
+  }
+
+  // Due cards
+  async getDueCards(): Promise<DueCardsResponse> {
+    const response = await this.client.get<DueCardsResponse>('/v1/flashcard/due');
+    return response.data;
+  }
+
+  // CSV import
+  async importFlashcardsFromCSV(deckId: number, file: File): Promise<BulkOperationResponse> {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await this.client.post<BulkOperationResponse>(
+      `/v1/flashcard/decks/${deckId}/import/csv`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    return response.data;
   }
 }
 

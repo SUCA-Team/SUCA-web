@@ -1,8 +1,10 @@
 import React, { useContext, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ApiService, { type DeckResponse, type DeckCreate } from '../../services/apiService';
 import { AuthContext } from '../../context/AuthContext';
 
 export const FlashcardPage: React.FC = () => {
+  const navigate = useNavigate();
   const { user: firebaseUser, loading: authLoading } = useContext(AuthContext);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -44,19 +46,9 @@ export const FlashcardPage: React.FC = () => {
     }
   }, [firebaseUser, authLoading]);
 
-  const handleCreateDeck = async () => {
+  const handleCreateDeck = () => {
     if (!isLoggedIn) return;
-    const name = prompt('Name your new deck');
-    if (!name) return;
-    const description = prompt('Add a description for your deck (optional)') || '';
-    try {
-      const api = ApiService.getInstance();
-      const deckData: DeckCreate = { name, description };
-      const newDeck = await api.createDeck(deckData);
-      setDecks((prev) => [newDeck, ...prev]);
-    } catch (e) {
-      alert('Failed to create deck');
-    }
+    navigate('/flashcard/add');
   };
 
   const renderLoggedOut = () => (
@@ -110,17 +102,8 @@ export const FlashcardPage: React.FC = () => {
   const DeckCard: React.FC<{ deck: DeckResponse }> = ({ deck }) => {
     const [showMenu, setShowMenu] = useState(false);
 
-    const handleEditDeck = async () => {
-      const newName = prompt('Edit deck name', deck.name);
-      if (!newName || newName === deck.name) return;
-      try {
-        const api = ApiService.getInstance();
-        await api.updateDeck(deck.id, { name: newName });
-        setDecks((prev) => prev.map(d => d.id === deck.id ? { ...d, name: newName } : d));
-        setShowMenu(false);
-      } catch (e) {
-        alert('Failed to update deck');
-      }
+    const handleEditDeck = () => {
+      navigate(`/flashcard/edit/${deck.id}`);
     };
 
     const handleDeleteDeck = async () => {
@@ -248,7 +231,7 @@ export const FlashcardPage: React.FC = () => {
             fontSize: '0.9rem', 
             marginBottom: '0.75rem',
             display: 'flex',
-            alignItems: 'center',
+            alignItems: 'flex-end',
             gap: '6px',
             justifyContent: 'center',
           }}>
