@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import ApiService, { type FlashcardResponse, type FlashcardCreate, type FlashcardUpdate } from '../../services/apiService';
+import ApiService, { type FlashcardResponse, type FlashcardCreate } from '../../services/apiService';
 
 interface CardInProgress extends FlashcardResponse {
   isNew?: boolean;
@@ -33,6 +33,7 @@ export const EditDeckPage: React.FC = () => {
   const { deckId } = useParams<{ deckId: string }>();
   const [deckName, setDeckName] = useState('');
   const [description, setDescription] = useState('');
+  const [isPublic, setIsPublic] = useState(false);
   const [cardFront, setCardFront] = useState('');
   const [cardBack, setCardBack] = useState('');
   const [cardExample, setCardExample] = useState('');
@@ -64,6 +65,7 @@ export const EditDeckPage: React.FC = () => {
         const deck = await api.getDeck(Number(deckId));
         setDeckName(deck.name);
         setDescription(deck.description || '');
+        setIsPublic(deck.is_public);
 
         const flashcardsRes = await api.listFlashcards(Number(deckId));
         setOriginalCards(flashcardsRes.flashcards);
@@ -286,6 +288,7 @@ export const EditDeckPage: React.FC = () => {
       await api.updateDeck(Number(deckId), {
         name: deckName.trim(),
         description: description.trim() || null,
+        is_public: isPublic,
       });
 
       // Handle new cards
@@ -406,6 +409,45 @@ export const EditDeckPage: React.FC = () => {
                     boxSizing: 'border-box',
                   }}
                 />
+              </div>
+
+              <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <label style={{ fontWeight: 500, fontSize: '0.95rem' }}>Make deck public</label>
+                <label style={{ position: 'relative', display: 'inline-block', width: '50px', height: '24px' }}>
+                  <input
+                    type="checkbox"
+                    checked={isPublic}
+                    onChange={(e) => setIsPublic(e.target.checked)}
+                    style={{ opacity: 0, width: 0, height: 0 }}
+                  />
+                  <span
+                    style={{
+                      position: 'absolute',
+                      cursor: 'pointer',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      backgroundColor: isPublic ? '#2196F3' : '#ccc',
+                      transition: '0.4s',
+                      borderRadius: '24px',
+                    }}
+                  >
+                    <span
+                      style={{
+                        position: 'absolute',
+                        content: '',
+                        height: '18px',
+                        width: '18px',
+                        left: isPublic ? '28px' : '3px',
+                        bottom: '3px',
+                        backgroundColor: 'white',
+                        transition: '0.4s',
+                        borderRadius: '50%',
+                      }}
+                    />
+                  </span>
+                </label>
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#666', fontSize: '0.9rem' }}>

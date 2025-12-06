@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import ApiService, { type DeckResponse, type DeckCreate } from '../../services/apiService';
+import ApiService, { type DeckResponse } from '../../services/apiService';
 import { AuthContext } from '../../context/AuthContext';
 
 export const FlashcardPage: React.FC = () => {
@@ -51,6 +51,67 @@ export const FlashcardPage: React.FC = () => {
     navigate('/flashcard/add');
   };
 
+  const handleImportDecks = () => {
+    if (!isLoggedIn) return;
+
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.csv';
+    input.multiple = true;
+    
+    input.onchange = async (e: Event) => {
+      const target = e.target as HTMLInputElement;
+      const files = target.files;
+      if (!files || files.length === 0) return;
+
+      const api = ApiService.getInstance();
+      let successCount = 0;
+      let failCount = 0;
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const deckName = file.name.replace('.csv', '');
+
+        try {
+          // Create the deck first
+          const newDeck = await api.createDeck({
+            name: deckName,
+            description: 'Imported from CSV',
+          });
+
+          // Import the CSV file
+          await api.importFlashcardsFromCSV(newDeck.id, file);
+          successCount++;
+        } catch (error) {
+          console.error(`Failed to import ${file.name}:`, error);
+          failCount++;
+        }
+      }
+
+      // Show result
+      if (successCount > 0 && failCount === 0) {
+        alert(`Successfully imported ${successCount} deck(s)!`);
+      } else if (successCount > 0 && failCount > 0) {
+        alert(`Imported ${successCount} deck(s) successfully. Failed to import ${failCount} deck(s).`);
+      } else {
+        alert(`Failed to import all ${failCount} deck(s). Please check the CSV format.`);
+      }
+
+      // Reload decks
+      if (successCount > 0) {
+        const deckRes = await api.listDecks();
+        setDecks(deckRes.decks ?? []);
+      }
+    };
+
+    input.click();
+  };
+
+  const handleBrowseDecks = () => {
+    if (!isLoggedIn) return;
+    navigate('/flashcard/browse');
+  };
+
   const renderLoggedOut = () => (
     <>
       <h1 className="page-title">Flashcard</h1>
@@ -63,20 +124,50 @@ export const FlashcardPage: React.FC = () => {
       <h1 className="page-title" style={{ marginBottom: '1rem' }}>Flashcard</h1>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
         <h2 style={{ margin: 0 }}>Your Decks</h2>
-        <button
-          onClick={handleCreateDeck}
-          style={{
-            background: '#c2185b',
-            color: '#fff',
-            border: 'none',
-            borderRadius: 999,
-            padding: '0.6rem 1rem',
-            cursor: 'pointer',
-            fontWeight: 700,
-          }}
-        >
-          Create
-        </button>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button
+            onClick={handleBrowseDecks}
+            style={{
+              background: '#2196F3',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 999,
+              padding: '0.6rem 1rem',
+              cursor: 'pointer',
+              fontWeight: 700,
+            }}
+          >
+            Browse Decks
+          </button>
+          <button
+            onClick={handleImportDecks}
+            style={{
+              background: '#4CAF50',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 999,
+              padding: '0.6rem 1rem',
+              cursor: 'pointer',
+              fontWeight: 700,
+            }}
+          >
+            Import Deck
+          </button>
+          <button
+            onClick={handleCreateDeck}
+            style={{
+              background: '#c2185b',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 999,
+              padding: '0.6rem 1rem',
+              cursor: 'pointer',
+              fontWeight: 700,
+            }}
+          >
+            Create
+          </button>
+        </div>
       </div>
       <p style={{ fontSize: '1.05rem' }}>
         Wanna SUCA? Create your first deck{' '}
@@ -106,6 +197,27 @@ export const FlashcardPage: React.FC = () => {
       navigate(`/flashcard/edit/${deck.id}`);
     };
 
+    const handleExportDeck = async () => {
+      try {
+        const api = ApiService.getInstance();
+        const blob = await api.exportDeckToCSV(deck.id);
+        
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${deck.name}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        setShowMenu(false);
+      } catch (e) {
+        console.error('Failed to export deck:', e);
+        alert('Failed to export deck');
+      }
+    };
+
     const handleDeleteDeck = async () => {
       if (!confirm(`Delete deck "${deck.name}"?`)) return;
       try {
@@ -113,7 +225,7 @@ export const FlashcardPage: React.FC = () => {
         await api.deleteDeck(deck.id);
         setDecks((prev) => prev.filter(d => d.id !== deck.id));
         setShowMenu(false);
-      } catch (e) {
+      } catch {
         alert('Failed to delete deck');
       }
     };
@@ -190,6 +302,37 @@ export const FlashcardPage: React.FC = () => {
               </div>
             </button>
             <button
+              onClick={handleExportDeck}
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                border: 'none',
+                background: 'transparent',
+                textAlign: 'left',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                fontSize: '14px',
+                fontWeight: 600,
+                color: '#000',
+              }}
+            >
+              <span>Download Deck</span>
+              <div style={{ 
+                width: '32px', 
+                height: '32px', 
+                background: '#e8f5e9', 
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '18px',
+              }}>
+                ↓
+              </div>
+            </button>
+            <button
               onClick={handleDeleteDeck}
               style={{
                 width: '100%',
@@ -240,18 +383,22 @@ export const FlashcardPage: React.FC = () => {
           </div>
         </div>
         <div style={{ width: '340px', height: '50px' , marginBottom: '30px', marginLeft: 'auto', marginRight: 'auto' }}>
-          <button style={{
-            width: '340px',
-            height: '50px',
-            borderRadius: '15px',
-            border: 'none',
-            padding: '0.5rem 0.8rem',
-            background: '#c2185b',
-            color: '#fff',
-            fontWeight: 700,
-            cursor: 'pointer',
-            
-          }}>Study</button>
+          <button
+            onClick={() => navigate(`/flashcard/study/${deck.id}`)}
+            style={{
+              width: '340px',
+              height: '50px',
+              borderRadius: '15px',
+              border: 'none',
+              padding: '0.5rem 0.8rem',
+              background: '#c2185b',
+              color: '#fff',
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            Study
+          </button>
         </div>
       </div>
     );
@@ -264,20 +411,50 @@ export const FlashcardPage: React.FC = () => {
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '1rem', width: '100%' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '1400px', maxWidth: '100%' }}>
           <h2 style={{ margin: 0 }}>Your Decks</h2>
-          <button
-            onClick={handleCreateDeck}
-            style={{
-              background: '#c2185b',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 999,
-              padding: '0.6rem 1rem',
-              cursor: 'pointer',
-              fontWeight: 700,
-            }}
-          >
-            + Create
-          </button>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button
+              onClick={handleBrowseDecks}
+              style={{
+                background: '#2196F3',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 999,
+                padding: '0.6rem 1rem',
+                cursor: 'pointer',
+                fontWeight: 700,
+              }}
+            >
+              Browse Decks
+            </button>
+            <button
+              onClick={handleImportDecks}
+              style={{
+                background: '#4CAF50',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 999,
+                padding: '0.6rem 1rem',
+                cursor: 'pointer',
+                fontWeight: 700,
+              }}
+            >
+              Import Deck
+            </button>
+            <button
+              onClick={handleCreateDeck}
+              style={{
+                background: '#c2185b',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 999,
+                padding: '0.6rem 1rem',
+                cursor: 'pointer',
+                fontWeight: 700,
+              }}
+            >
+              + Create
+            </button>
+          </div>
         </div>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', maxWidth: '1600px', margin: '0 auto', gap: '6rem' }}>
