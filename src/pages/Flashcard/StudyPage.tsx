@@ -28,6 +28,9 @@ export const StudyPage: React.FC = () => {
   const [isFlipped, setIsFlipped] = useState(false);
   const [cardsStudied, setCardsStudied] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [dueCardCount, setDueCardCount] = useState(0);
+  const [againCards, setAgainCards] = useState<FlashcardResponse[]>([]);
+  const [isRetryPhase, setIsRetryPhase] = useState(false);
 
   useEffect(() => {
     const loadDeck = async () => {
@@ -38,8 +41,12 @@ export const StudyPage: React.FC = () => {
 
       try {
         const api = ApiService.getInstance();
-        const deck = await api.getDeck(Number(deckId));
+        const [deck, dueCards] = await Promise.all([
+          api.getDeck(Number(deckId)),
+          api.getDeckDueCards(Number(deckId))
+        ]);
         setDeckName(deck.name);
+        setDueCardCount(dueCards.flashcards.length);
       } catch (e) {
         console.error('Failed to load deck:', e);
         alert('Failed to load deck');
@@ -70,11 +77,37 @@ export const StudyPage: React.FC = () => {
     loadCards();
   }, [mode, deckId]);
 
-  const handleModeSelect = (selectedMode: 'manual' | 'fsrs') => {
+  const handleModeSelect = async (selectedMode: 'manual' | 'fsrs') => {
     if (selectedMode === 'manual') {
       setMode('manual');
     } else {
-      alert('FSRS SUCA mode coming soon!');
+      // FSRS mode - load due cards and start session
+      if (dueCardCount === 0) {
+        alert('No cards are due for review at this time!');
+        return;
+      }
+      
+      setIsLoading(true);
+      try {
+        const api = ApiService.getInstance();
+        const dueCardsRes = await api.getDeckDueCards(Number(deckId));
+        
+        // Randomize the cards
+        const shuffled = [...dueCardsRes.flashcards].sort(() => Math.random() - 0.5);
+        
+        setStudyCards(shuffled);
+        setCurrentCardIndex(0);
+        setIsFlipped(false);
+        setCardsStudied(0);
+        setAgainCards([]);
+        setIsRetryPhase(false);
+        setMode('session');
+      } catch (e) {
+        console.error('Failed to load due cards:', e);
+        alert('Failed to load due cards');
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -155,10 +188,15 @@ export const StudyPage: React.FC = () => {
     }
 
     const selected = allCards.filter(c => selectedCardIds.has(c.id));
-    setStudyCards(selected);
+    // Randomize the cards
+    const shuffled = [...selected].sort(() => Math.random() - 0.5);
+    
+    setStudyCards(shuffled);
     setCurrentCardIndex(0);
     setIsFlipped(false);
     setCardsStudied(0);
+    setAgainCards([]);
+    setIsRetryPhase(false);
     setMode('session');
   };
 
@@ -175,11 +213,29 @@ export const StudyPage: React.FC = () => {
       const api = ApiService.getInstance();
       await api.reviewFlashcard(Number(deckId), currentCard.id, { rating });
       
-      setCardsStudied(prev => prev + 1);
+      // If rating is "Again" (1), add to retry list
+      if (rating === 1) {
+        setAgainCards(prev => [...prev, currentCard]);
+        // Don't increment cardsStudied for "Again" rating
+      } else {
+        // Only increment progress for non-Again ratings
+        setCardsStudied(prev => prev + 1);
+      }
       
-      // Check if this was the last card
+      // Check if this was the last card in current phase
       if (currentCardIndex === studyCards.length - 1) {
-        setMode('complete');
+        // If there are cards that need retry and not already in retry phase
+        if (againCards.length > 0 && !isRetryPhase) {
+          // Start retry phase with Again cards
+          setStudyCards(againCards);
+          setAgainCards([]);
+          setCurrentCardIndex(0);
+          setIsFlipped(false);
+          setIsRetryPhase(true);
+        } else {
+          // No more cards to retry, complete the session
+          setMode('complete');
+        }
       } else {
         setCurrentCardIndex(prev => prev + 1);
         setIsFlipped(false);
@@ -214,7 +270,7 @@ export const StudyPage: React.FC = () => {
           <p style={{ fontSize: '1.2rem', color: '#666', marginBottom: '3rem' }}>
             Are you ready to SUCA? Choose your option below.
           </p>
-          <div style={{ display: 'flex', gap: '2rem', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', gap: '2rem', justifyContent: 'center', marginBottom: '2rem' }}>
             <button
               onClick={() => handleModeSelect('manual')}
               style={{
@@ -247,6 +303,39 @@ export const StudyPage: React.FC = () => {
             >
               FSRS SUCA
             </button>
+          </div>
+          <div style={{
+            background: '#fff',
+            borderRadius: '16px',
+            padding: '1.5rem 2rem',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '1rem',
+            maxWidth: '400px',
+            margin: '0 auto',
+          }}>
+            <div style={{
+              width: '50px',
+              height: '50px',
+              background: '#e3f2fd',
+              borderRadius: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '1.5rem',
+            }}>
+              📚
+            </div>
+            <div style={{ textAlign: 'left' }}>
+              <div style={{ fontSize: '0.9rem', color: '#666', marginBottom: '0.25rem' }}>
+                Due Cards
+              </div>
+              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#2196F3' }}>
+                {dueCardCount}
+              </div>
+            </div>
           </div>
         </div>
       </main>
@@ -398,7 +487,8 @@ export const StudyPage: React.FC = () => {
   if (mode === 'session') {
     const currentCard = studyCards[currentCardIndex];
     const { back, example } = decodeBackWithExample(currentCard.back);
-    const progress = ((currentCardIndex) / studyCards.length) * 100;
+    const totalCardsInSession = studyCards.length;
+    const progress = (cardsStudied / totalCardsInSession) * 100;
 
     return (
       <main className="page" style={{ background: '#f5f5f5', minHeight: '100vh', padding: '2rem' }}>
@@ -413,7 +503,10 @@ export const StudyPage: React.FC = () => {
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
               <span style={{ fontWeight: 600, color: '#666' }}>Progress</span>
-              <span style={{ fontWeight: 700 }}>{currentCardIndex + 1} of {studyCards.length} cards</span>
+              <span style={{ fontWeight: 700 }}>
+                {currentCardIndex + 1} of {studyCards.length} cards
+                {isRetryPhase && <span style={{ color: '#f44336', marginLeft: '0.5rem' }}>(Retry)</span>}
+              </span>
             </div>
             <div style={{
               width: '100%',
