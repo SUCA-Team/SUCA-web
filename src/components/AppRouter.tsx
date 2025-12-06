@@ -8,6 +8,7 @@ import DictionaryPage from '../pages/Dictionary/DictionaryPage';
 import FlashcardPage from '../pages/Flashcard/FlashcardPage';
 import AddDeckPage from '../pages/Flashcard/AddDeckPage';
 import EditDeckPage from '../pages/Flashcard/EditDeckPage';
+import StudyPage from '../pages/Flashcard/StudyPage';
 import LoginPage from '../pages/Login/LoginPage';
 import HelpPage from '../pages/Help/HelpPage';
 import PrivacyPage from '../pages/Privacy/PrivacyPage';
@@ -29,6 +30,7 @@ export const AppRouter: React.FC = () => {
           <Route path="/flashcard" element={<FlashcardPage />} />
           <Route path="/flashcard/add" element={<AddDeckPage />} />
           <Route path="/flashcard/edit/:deckId" element={<EditDeckPage />} />
+          <Route path="/flashcard/study/:deckId" element={<StudyPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/help" element={<HelpPage />} />
           <Route path="/faq" element={<HelpPage />} />

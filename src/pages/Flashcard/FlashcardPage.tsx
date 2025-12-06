@@ -240,18 +240,22 @@ export const FlashcardPage: React.FC = () => {
           </div>
         </div>
         <div style={{ width: '340px', height: '50px' , marginBottom: '30px', marginLeft: 'auto', marginRight: 'auto' }}>
-          <button style={{
-            width: '340px',
-            height: '50px',
-            borderRadius: '15px',
-            border: 'none',
-            padding: '0.5rem 0.8rem',
-            background: '#c2185b',
-            color: '#fff',
-            fontWeight: 700,
-            cursor: 'pointer',
-            
-          }}>Study</button>
+          <button
+            onClick={() => navigate(`/flashcard/study/${deck.id}`)}
+            style={{
+              width: '340px',
+              height: '50px',
+              borderRadius: '15px',
+              border: 'none',
+              padding: '0.5rem 0.8rem',
+              background: '#c2185b',
+              color: '#fff',
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            Study
+          </button>
         </div>
       </div>
     );
