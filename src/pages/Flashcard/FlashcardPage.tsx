@@ -24,9 +24,9 @@ export const FlashcardPage: React.FC = () => {
       try {
         // Ensure Firebase token is available before making API calls
         await firebaseUser.getIdToken();
-        
+        await firebaseUser.reload();
         // Small delay to ensure the global auth object is in sync
-        await new Promise(resolve => setTimeout(resolve, 200));
+        // await new Promise(resolve => setTimeout(resolve, 1000));
         
         const api = ApiService.getInstance();
         const deckRes = await api.listDecks();

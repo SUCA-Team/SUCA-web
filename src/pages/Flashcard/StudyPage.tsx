@@ -263,7 +263,31 @@ export const StudyPage: React.FC = () => {
   if (mode === 'selection') {
     return (
       <main className="page" style={{ background: '#f5f5f5', minHeight: '100vh', padding: '2rem' }}>
-        <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
+        <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center', position: 'relative' }}>
+          {/* Back Button - top right */}
+          <button
+            onClick={handleBackToHome}
+            style={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              background: '#c2185b',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '0.5rem 1.2rem',
+              cursor: 'pointer',
+              fontWeight: 700,
+              fontSize: '1rem',
+              boxShadow: '0 2px 8px rgba(194,24,91,0.15)',
+              transition: 'background 0.2s',
+              zIndex: 2,
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = '#ad1457'}
+            onMouseLeave={e => e.currentTarget.style.background = '#c2185b'}
+          >
+            ← Back
+          </button>
           <h1 style={{ fontSize: '2.5rem', fontWeight: 700, marginBottom: '1rem' }}>
             Study: {deckName}
           </h1>
@@ -346,24 +370,32 @@ export const StudyPage: React.FC = () => {
   if (mode === 'manual') {
     return (
       <main className="page" style={{ background: '#f5f5f5', minHeight: '100vh', padding: '2rem' }}>
-        <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '2rem' }}>
-            <button
-              onClick={handleBackToSelection}
-              style={{
-                background: '#9e9e9e',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '0.5rem 1rem',
-                cursor: 'pointer',
-                fontWeight: 600,
-                marginRight: '1rem',
-              }}
-            >
-              ← Back
-            </button>
-            <h1 style={{ margin: 0, fontSize: '2rem', fontWeight: 700 }}>
+        <div style={{ maxWidth: '1000px', margin: '0 auto', position: 'relative' }}>
+          <button
+            onClick={handleBackToSelection}
+            style={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              background: '#c2185b',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '0.5rem 1.2rem',
+              cursor: 'pointer',
+              fontWeight: 700,
+              fontSize: '1rem',
+              boxShadow: '0 2px 8px rgba(194,24,91,0.15)',
+              transition: 'background 0.2s',
+              zIndex: 2,
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = '#ad1457'}
+            onMouseLeave={e => e.currentTarget.style.background = '#c2185b'}
+          >
+            ← Back
+          </button>
+          <div style={{ marginBottom: '2rem', minHeight: '2.5rem' }}>
+            <h1 style={{ margin: 0, fontSize: '2rem', fontWeight: 700, textAlign: 'center' }}>
               Select Cards to Study
             </h1>
           </div>
@@ -493,23 +525,30 @@ export const StudyPage: React.FC = () => {
     return (
       <main className="page" style={{ background: '#f5f5f5', minHeight: '100vh', padding: '2rem' }}>
         <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-          {/* Back Button */}
-          <div style={{ marginBottom: '1rem' }}>
-            <button
-              onClick={handleBackToSelection}
-              style={{
-                background: '#9e9e9e',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '0.5rem 1rem',
-                cursor: 'pointer',
-                fontWeight: 600,
-              }}
-            >
-              ← Back
-            </button>
-          </div>
+          {/* Back Button - top right */}
+          <button
+            onClick={handleBackToSelection}
+            style={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              background: '#c2185b',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '0.5rem 1.2rem',
+              cursor: 'pointer',
+              fontWeight: 700,
+              fontSize: '1rem',
+              boxShadow: '0 2px 8px rgba(194,24,91,0.15)',
+              transition: 'background 0.2s',
+              zIndex: 2,
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = '#ad1457'}
+            onMouseLeave={e => e.currentTarget.style.background = '#c2185b'}
+          >
+            ← Back
+          </button>
           {/* Progress Bar */}
           <div style={{
             background: '#fff',
@@ -517,6 +556,7 @@ export const StudyPage: React.FC = () => {
             padding: '1.5rem',
             boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
             marginBottom: '2rem',
+            position: 'relative',
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
               <span style={{ fontWeight: 600, color: '#666' }}>Progress</span>

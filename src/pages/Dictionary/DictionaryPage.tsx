@@ -15,7 +15,7 @@ export const DictionaryPage: React.FC = () => {
   const [pos, setPos] = useState<SearchPos | null>(null);
   const [showMoreExamplesIdx, setShowMoreExamplesIdx] = useState<number | null>(null);
   const [showAddToDeckOverlay, setShowAddToDeckOverlay] = useState(false);
-  const [overlayView, setOverlayView] = useState<'deck-select' | 'add-card'>('deck-select');
+  const [overlayView, setOverlayView] = useState<'deck-select' | 'add-card' | 'create-deck'>('deck-select');
   const [selectedWord, setSelectedWord] = useState<any>(null);
   const [userDecks, setUserDecks] = useState<any[]>([]);
   const [selectedDeckId, setSelectedDeckId] = useState<number | null>(null);
@@ -23,6 +23,8 @@ export const DictionaryPage: React.FC = () => {
   const [cardBack, setCardBack] = useState('');
   const [cardExample, setCardExample] = useState('');
   const [isLoadingDecks, setIsLoadingDecks] = useState(false);
+  const [newDeckName, setNewDeckName] = useState('');
+  const [newDeckDescription, setNewDeckDescription] = useState('');
 
   const fetchResults = async (text: string, pageNum: number, posFilter: SearchPos | null) => {
     if (!text.trim()) return;
@@ -129,8 +131,66 @@ export const DictionaryPage: React.FC = () => {
     setOverlayView('deck-select');
   };
 
+  const handleCreateDeckClick = () => {
+    setOverlayView('create-deck');
+    // Pre-fill card fields
+    if (selectedWord) {
+      setCardFront(selectedWord.word || '');
+      const firstMeaning = selectedWord.meanings?.[0]?.definitions?.[0] || '';
+      const reading = selectedWord.reading || '';
+      setCardBack(reading ? `${firstMeaning} - ${reading}` : firstMeaning);
+      const firstExample = selectedWord.meanings?.[0]?.examples?.[0];
+      if (firstExample) {
+        setCardExample(`${firstExample.japanese} - ${firstExample.english}`);
+      } else {
+        setCardExample('');
+      }
+    }
+  };
+
+  const handleCreateDeckAndCard = async () => {
+    if (!newDeckName.trim()) {
+      alert('Please enter a deck name.');
+      return;
+    }
+    if (!cardFront.trim() || !cardBack.trim()) {
+      alert('Please fill in at least the front and back of the card.');
+      return;
+    }
+
+    try {
+      const api = ApiService.getInstance();
+      
+      // Create the deck first
+      const newDeck = await api.createDeck({
+        name: newDeckName.trim(),
+        description: newDeckDescription.trim() || null,
+      });
+      
+      // Then add the card to the new deck
+      const encodedBack = cardExample.trim()
+        ? `${cardBack.trim()} {${cardExample.trim()}}`
+        : cardBack.trim();
+      
+      await api.createFlashcard(newDeck.id, {
+        front: cardFront.trim(),
+        back: encodedBack,
+      });
+      
+      alert(`Deck "${newDeck.name}" created successfully with 1 card!`);
+      resetOverlayState();
+    } catch (error) {
+      console.error('Failed to create deck and card:', error);
+      alert('Failed to create deck and card. Please try again.');
+    }
+  };
+
   const handleCloseOverlay = () => {
-    if (overlayView === 'add-card' && (cardFront.trim() || cardBack.trim() || cardExample.trim())) {
+    const hasChanges = 
+      (overlayView === 'add-card' && (cardFront.trim() || cardBack.trim() || cardExample.trim())) ||
+      (overlayView === 'create-deck' && (newDeckName.trim() || newDeckDescription.trim() || cardFront.trim() || cardBack.trim() || cardExample.trim()));
+    
+    if (hasChanges) {
       if (confirm('You have unsaved changes. Do you want to discard them?')) {
         resetOverlayState();
       }
@@ -147,6 +207,8 @@ export const DictionaryPage: React.FC = () => {
     setCardFront('');
     setCardBack('');
     setCardExample('');
+    setNewDeckName('');
+    setNewDeckDescription('');
   };
 
   const handleAddCard = async () => {
@@ -632,6 +694,25 @@ export const DictionaryPage: React.FC = () => {
             {/* Deck Selection View */}
             {overlayView === 'deck-select' && (
               <div>
+                <button
+                  onClick={handleCreateDeckClick}
+                  style={{
+                    position: 'absolute',
+                    top: '1rem',
+                    left: '1rem',
+                    background: '#4CAF50',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '0.5rem 1rem',
+                    cursor: 'pointer',
+                    fontWeight: 700,
+                    fontSize: '0.9rem',
+                    boxShadow: '0 2px 8px rgba(76,175,80,0.15)',
+                  }}
+                >
+                  + Create Deck
+                </button>
                 <h2 style={{ marginBottom: '1.5rem', marginTop: '0.5rem', textAlign: 'center' }}>
                   Choose the Deck you want to add to
                 </h2>
@@ -674,6 +755,184 @@ export const DictionaryPage: React.FC = () => {
                     ))}
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Create Deck View */}
+            {overlayView === 'create-deck' && selectedWord && (
+              <div>
+                <button
+                  onClick={handleBackToDeckSelect}
+                  style={{
+                    position: 'absolute',
+                    top: '1rem',
+                    left: '1rem',
+                    background: 'none',
+                    border: 'none',
+                    fontSize: '1.5rem',
+                    cursor: 'pointer',
+                    color: '#666',
+                    fontWeight: 700,
+                  }}
+                >
+                  ←
+                </button>
+                <h2 style={{ marginBottom: '1.5rem', marginTop: '0.5rem', textAlign: 'center' }}>
+                  Create New Deck
+                </h2>
+                
+                {/* Two-column layout */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+                  {/* Left: Create Deck Form */}
+                  <div style={{ background: '#f0f9ff', padding: '1.5rem', borderRadius: '12px' }}>
+                    <h3 style={{ margin: '0 0 1rem 0', color: '#2196F3', fontSize: '1.1rem' }}>Deck Information</h3>
+                    <div style={{ marginBottom: '1rem' }}>
+                      <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Deck Name</label>
+                      <input
+                        type="text"
+                        value={newDeckName}
+                        onChange={(e) => setNewDeckName(e.target.value)}
+                        placeholder="Enter deck name..."
+                        style={{
+                          width: '100%',
+                          padding: '0.75rem',
+                          border: '1px solid #ddd',
+                          borderRadius: '8px',
+                          fontSize: '1rem',
+                          boxSizing: 'border-box',
+                        }}
+                      />
+                    </div>
+                    <div style={{ marginBottom: '1rem' }}>
+                      <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Description (Optional)</label>
+                      <textarea
+                        value={newDeckDescription}
+                        onChange={(e) => setNewDeckDescription(e.target.value)}
+                        placeholder="Enter deck description..."
+                        rows={4}
+                        style={{
+                          width: '100%',
+                          padding: '0.75rem',
+                          border: '1px solid #ddd',
+                          borderRadius: '8px',
+                          fontSize: '1rem',
+                          boxSizing: 'border-box',
+                          resize: 'vertical',
+                        }}
+                      />
+                    </div>
+                    <button
+                      onClick={handleCreateDeckAndCard}
+                      style={{
+                        width: '100%',
+                        padding: '1rem',
+                        background: '#2196F3',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontSize: '1rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        boxShadow: '0 2px 8px rgba(33,150,243,0.2)',
+                      }}
+                    >
+                      Create Deck
+                    </button>
+                  </div>
+
+                  {/* Right: Add Card Form */}
+                  <div style={{ background: '#fff9f0', padding: '1.5rem', borderRadius: '12px' }}>
+                    <h3 style={{ margin: '0 0 1rem 0', color: '#ff9800', fontSize: '1.1rem' }}>First Card</h3>
+                    <div style={{ marginBottom: '1rem' }}>
+                      <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, fontSize: '0.9rem' }}>Front (Question)</label>
+                      <input
+                        type="text"
+                        value={cardFront}
+                        onChange={(e) => setCardFront(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '0.6rem',
+                          border: '1px solid #ddd',
+                          borderRadius: '8px',
+                          fontSize: '0.95rem',
+                          boxSizing: 'border-box',
+                        }}
+                      />
+                    </div>
+                    <div style={{ marginBottom: '1rem' }}>
+                      <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, fontSize: '0.9rem' }}>Back (Answer)</label>
+                      <input
+                        type="text"
+                        value={cardBack}
+                        onChange={(e) => setCardBack(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '0.6rem',
+                          border: '1px solid #ddd',
+                          borderRadius: '8px',
+                          fontSize: '0.95rem',
+                          boxSizing: 'border-box',
+                        }}
+                      />
+                    </div>
+                    <div style={{ marginBottom: '1rem' }}>
+                      <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, fontSize: '0.9rem' }}>Example (Optional)</label>
+                      <input
+                        type="text"
+                        value={cardExample}
+                        onChange={(e) => setCardExample(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '0.6rem',
+                          border: '1px solid #ddd',
+                          borderRadius: '8px',
+                          fontSize: '0.95rem',
+                          boxSizing: 'border-box',
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Word information for reference */}
+                <div style={{ background: '#fff', border: '1px solid #ddd', borderRadius: '12px', padding: '1.5rem', marginBottom: '1rem' }}>
+                  <h3 style={{ margin: '0 0 1rem 0', color: '#BC002D' }}>Word Information</h3>
+                  
+                  <div style={{ marginBottom: '1rem' }}>
+                    <strong style={{ fontSize: '1.5rem' }}>{selectedWord.word}</strong>
+                    {selectedWord.reading && <span style={{ marginLeft: '0.5rem', color: '#666' }}>({selectedWord.reading})</span>}
+                  </div>
+
+                  {/* Meanings */}
+                  {selectedWord.meanings?.map((meaning: any, idx: number) => (
+                    <div key={idx} style={{ marginBottom: '1rem' }}>
+                      <div style={{ color: '#666', fontSize: '0.9rem', marginBottom: '0.25rem' }}>
+                        <strong>Part of speech:</strong> {meaning.pos?.join(', ') || 'N/A'}
+                      </div>
+                      <div style={{ marginBottom: '0.5rem' }}>
+                        <strong>Definitions:</strong>
+                        <ul style={{ margin: '0.25rem 0', paddingLeft: '1.5rem' }}>
+                          {meaning.definitions?.map((def: string, defIdx: number) => (
+                            <li key={defIdx}>{def}</li>
+                          ))}
+                        </ul>
+                      </div>
+                      {meaning.examples?.length > 0 && (
+                        <div>
+                          <strong>Examples:</strong>
+                          <ul style={{ margin: '0.25rem 0', paddingLeft: '1.5rem' }}>
+                            {meaning.examples.map((ex: any, exIdx: number) => (
+                              <li key={exIdx} style={{ marginBottom: '0.25rem' }}>
+                                <div>{ex.japanese}</div>
+                                <div style={{ color: '#888', fontSize: '0.9rem', fontStyle: 'italic' }}>{ex.english}</div>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
