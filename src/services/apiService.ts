@@ -118,16 +118,18 @@ export interface BulkOperationResponse {
   errors?: string[];
 }
 
+export interface DueDeckStats {
+  deck_id: number;
+  deck_name: string;
+  total_cards: number;
+  new_cards: number;
+  learning_cards: number;
+  review_cards: number;
+  due_cards: number;
+}
+
 export interface DueCardsResponse {
-  decks: Array<{
-    deck_id: number;
-    deck_name: string;
-    total_cards: number;
-    new_cards: number;
-    learning_cards: number;
-    review_cards: number;
-    due_cards: number;
-  }>;
+  decks: DueDeckStats[];
   total_due: number;
 }
 
@@ -407,6 +409,14 @@ class ApiService {
     return response.data;
   }
 
+  // CSV export
+  async exportDeckToCSV(deckId: number): Promise<Blob> {
+    const response = await this.client.get(`/v1/flashcard/decks/${deckId}/export/csv`, {
+      responseType: 'blob',
+    });
+    return response.data;
+  }
+
   // Due cards
   async getDueCards(): Promise<DueCardsResponse> {
     const response = await this.client.get<DueCardsResponse>('/v1/flashcard/due');
@@ -426,6 +436,28 @@ class ApiService {
         },
       }
     );
+    return response.data;
+  }
+
+  // Public decks
+  async listPublicDecks(): Promise<DeckListResponse> {
+    const response = await this.client.get<DeckListResponse>('/v1/flashcard/public/decks');
+    return response.data;
+  }
+
+  async getPublicDeck(deckId: number): Promise<DeckResponse> {
+    const response = await this.client.get<DeckResponse>(`/v1/flashcard/public/decks/${deckId}`);
+    return response.data;
+  }
+
+  async listPublicDeckCards(deckId: number): Promise<FlashcardListResponse> {
+    const response = await this.client.get<FlashcardListResponse>(`/v1/flashcard/public/decks/${deckId}/cards`);
+    return response.data;
+  }
+
+  // Copy deck to user's collection
+  async copyDeck(deckId: number): Promise<DeckResponse> {
+    const response = await this.client.post<DeckResponse>(`/v1/flashcard/decks/${deckId}/copy`);
     return response.data;
   }
 }
