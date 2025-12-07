@@ -24,10 +24,8 @@ export const AboutPage: React.FC = () => {
             <section>
               <h2>What We Offer</h2>
               <ul>
-                <li><strong>Comprehensive Dictionary:</strong> Search Japanese words with detailed definitions, readings, JLPT levels, and example sentences</li>
-                <li><strong>Smart Flashcards:</strong> Create custom study sets and review vocabulary with spaced repetition</li>
-                <li><strong>JLPT Preparation:</strong> Content organized by JLPT levels (N5-N1) to match your learning goals</li>
-                <li><strong>Progress Tracking:</strong> Monitor your learning journey with detailed statistics</li>
+                <p><strong>Comprehensive Dictionary:</strong> Search Japanese words with detailed definitions, readings, JLPT levels, and example sentences</p>
+                <p><strong>Smart Flashcards:</strong> Create custom study sets and review vocabulary with spaced repetition</p>
               </ul>
             </section>
             
@@ -38,14 +36,6 @@ export const AboutPage: React.FC = () => {
                 experienced firsthand the challenges of learning Japanese. We wanted to build 
                 a platform that combines the best of traditional study methods with modern 
                 technology to create an optimal learning experience.
-              </p>
-            </section>
-
-            <section>
-              <h2>Technology</h2>
-              <p>
-                Built with modern web technologies including React, TypeScript, and Firebase, 
-                SUCA delivers a fast, reliable, and secure learning experience across all devices.
               </p>
             </section>
             
