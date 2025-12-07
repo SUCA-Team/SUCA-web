@@ -20,9 +20,9 @@ export const Footer: React.FC = () => {
         <div className="footer-column">
           <h4>OTHER</h4>
           <Link to="/about" className="footer-link">About us</Link>
-          <Link to="/privacy" className="footer-link">Privacy policy</Link>
+          <Link to="/attribution" className="footer-link">Data attribution</Link>
           <Link to="/terms" className="footer-link">Legal terms</Link>
-          <Link to="/faq" className="footer-link">FAQ</Link>
+          <Link to="/help" className="footer-link">Help</Link>
           <Link to="/contact" className="footer-link">Contact us</Link>
         </div>
       </div>

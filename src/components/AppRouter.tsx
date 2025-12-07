@@ -13,9 +13,9 @@ import BrowsePublicDecksPage from '../pages/Flashcard/BrowsePublicDecksPage';
 import ViewPublicDeckCardsPage from '../pages/Flashcard/ViewPublicDeckCardsPage';
 import LoginPage from '../pages/Login/LoginPage';
 import HelpPage from '../pages/Help/HelpPage';
-import PrivacyPage from '../pages/Privacy/PrivacyPage';
 import TermsPage from '../pages/Terms/TermsPage';
 import ContactPage from '../pages/Contact/ContactPage';
+import DataSourcePage from '../pages/DataSource/DataSourcePage';
 import Footer from '../components/layout/Footer';
 
 export const AppRouter: React.FC = () => {
@@ -37,10 +37,10 @@ export const AppRouter: React.FC = () => {
           <Route path="/flashcard/public/:deckId/cards" element={<ViewPublicDeckCardsPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/help" element={<HelpPage />} />
-          <Route path="/faq" element={<HelpPage />} />
-          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/help" element={<HelpPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/contact" element={<ContactPage />} />
+          <Route path="/attribution" element={<DataSourcePage />} />
         </Routes>
         <Footer />
       </div>
