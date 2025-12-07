@@ -82,7 +82,30 @@ export const AddDeckPage: React.FC = () => {
 
   const handleAddCard = () => {
     if (!cardFront.trim() || !cardBack.trim()) {
-      alert('Please enter both Front (Question) and Back (Answer) to add a card.');
+      const modal = document.createElement('div');
+      modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;';
+      
+      const dialog = document.createElement('div');
+      dialog.style.cssText = 'background: white; padding: 2rem; border-radius: 12px; max-width: 400px; text-align: center;';
+      
+      dialog.innerHTML = `
+        <h3 style="margin: 0 0 1rem 0; font-size: 1.25rem;">Missing Fields</h3>
+        <p style="margin: 0 0 1.5rem 0; color: #666;">Please enter both Front (Question) and Back (Answer) to add a card.</p>
+        <button id="okBtn" style="padding: 0.75rem 1.5rem; border: none; border-radius: 8px; background: #2196F3; color: white; font-weight: 600; cursor: pointer;">OK</button>
+      `;
+      
+      modal.appendChild(dialog);
+      document.body.appendChild(modal);
+      
+      document.getElementById('okBtn')?.addEventListener('click', () => {
+        document.body.removeChild(modal);
+      });
+      
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          document.body.removeChild(modal);
+        }
+      });
       return;
     }
 
@@ -105,7 +128,30 @@ export const AddDeckPage: React.FC = () => {
 
   const handleSaveDeck = async () => {
     if (!deckName.trim()) {
-      alert('Please enter a Deck Name to save the deck.');
+      const modal = document.createElement('div');
+      modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;';
+      
+      const dialog = document.createElement('div');
+      dialog.style.cssText = 'background: white; padding: 2rem; border-radius: 12px; max-width: 400px; text-align: center;';
+      
+      dialog.innerHTML = `
+        <h3 style="margin: 0 0 1rem 0; font-size: 1.25rem;">Missing Deck Name</h3>
+        <p style="margin: 0 0 1.5rem 0; color: #666;">Please enter a Deck Name to save the deck.</p>
+        <button id="okBtn" style="padding: 0.75rem 1.5rem; border: none; border-radius: 8px; background: #2196F3; color: white; font-weight: 600; cursor: pointer;">OK</button>
+      `;
+      
+      modal.appendChild(dialog);
+      document.body.appendChild(modal);
+      
+      document.getElementById('okBtn')?.addEventListener('click', () => {
+        document.body.removeChild(modal);
+      });
+      
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          document.body.removeChild(modal);
+        }
+      });
       return;
     }
 
@@ -129,11 +175,58 @@ export const AddDeckPage: React.FC = () => {
         await api.bulkCreateFlashcards(newDeck.id, { cards: flashcards });
       }
 
-      alert(`Deck "${deckName}" created successfully with ${cardsInDeck.length} cards!`);
-      navigate('/flashcard');
+      const modal = document.createElement('div');
+      modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;';
+      
+      const dialog = document.createElement('div');
+      dialog.style.cssText = 'background: white; padding: 2rem; border-radius: 12px; max-width: 400px; text-align: center;';
+      
+      dialog.innerHTML = `
+        <h3 style="margin: 0 0 1rem 0; font-size: 1.25rem;">Deck Created Successfully</h3>
+        <p style="margin: 0 0 1.5rem 0; color: #666;">Deck "${deckName}" created successfully with ${cardsInDeck.length} cards!</p>
+        <button id="okBtn" style="padding: 0.75rem 1.5rem; border: none; border-radius: 8px; background: #4CAF50; color: white; font-weight: 600; cursor: pointer;">OK</button>
+      `;
+      
+      modal.appendChild(dialog);
+      document.body.appendChild(modal);
+      
+      document.getElementById('okBtn')?.addEventListener('click', () => {
+        document.body.removeChild(modal);
+        navigate('/flashcard');
+      });
+      
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          document.body.removeChild(modal);
+          navigate('/flashcard');
+        }
+      });
     } catch (e) {
       console.error('Failed to save deck:', e);
-      alert('Failed to save deck. Please try again.');
+      const modal = document.createElement('div');
+      modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;';
+      
+      const dialog = document.createElement('div');
+      dialog.style.cssText = 'background: white; padding: 2rem; border-radius: 12px; max-width: 400px; text-align: center;';
+      
+      dialog.innerHTML = `
+        <h3 style="margin: 0 0 1rem 0; font-size: 1.25rem;">Error</h3>
+        <p style="margin: 0 0 1.5rem 0; color: #666;">Failed to save deck. Please try again.</p>
+        <button id="okBtn" style="padding: 0.75rem 1.5rem; border: none; border-radius: 8px; background: #f44336; color: white; font-weight: 600; cursor: pointer;">OK</button>
+      `;
+      
+      modal.appendChild(dialog);
+      document.body.appendChild(modal);
+      
+      document.getElementById('okBtn')?.addEventListener('click', () => {
+        document.body.removeChild(modal);
+      });
+      
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          document.body.removeChild(modal);
+        }
+      });
     } finally {
       setIsSaving(false);
     }
@@ -161,17 +254,34 @@ export const AddDeckPage: React.FC = () => {
           </button>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-          {/* Left Column - Deck Information */}
-          <div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', alignItems: 'start' }}>
+          {/* Left Column - Deck Information + Add New Card */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             <div style={{
               background: '#fff',
               borderRadius: '16px',
               padding: '2rem',
               boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              marginBottom: '1.5rem',
             }}>
-              <h2 style={{ margin: '0 0 1.5rem 0', fontSize: '1.25rem', fontWeight: 600 }}>Deck Information</h2>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 600 }}>Deck Information</h2>
+                <button
+                  onClick={handleSaveDeck}
+                  disabled={!deckName.trim() || isSaving}
+                  style={{
+                    padding: '0.6rem 1.2rem',
+                    border: 'none',
+                    borderRadius: '8px',
+                    background: deckName.trim() ? '#4CAF50' : '#ccc',
+                    color: '#fff',
+                    fontSize: '0.9rem',
+                    fontWeight: 700,
+                    cursor: deckName.trim() ? 'pointer' : 'not-allowed',
+                  }}
+                >
+                  {isSaving ? 'Saving...' : 'Save Deck'}
+                </button>
+              </div>
               
               <div style={{ marginBottom: '1.5rem' }}>
                 <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500, fontSize: '0.95rem' }}>
@@ -220,35 +330,36 @@ export const AddDeckPage: React.FC = () => {
               </div>
             </div>
 
-            <button
-              onClick={handleSaveDeck}
-              disabled={!deckName.trim() || isSaving}
-              style={{
-                width: '100%',
-                padding: '1rem',
-                border: 'none',
-                borderRadius: '12px',
-                background: deckName.trim() ? '#4CAF50' : '#ccc',
-                color: '#fff',
-                fontSize: '1rem',
-                fontWeight: 700,
-                cursor: deckName.trim() ? 'pointer' : 'not-allowed',
-              }}
-            >
-              {isSaving ? 'Saving...' : 'Save Deck'}
-            </button>
-          </div>
-
-          {/* Right Column - Add New Card & Cards in Deck */}
-          <div>
+            {/* Add New Card */}
             <div style={{
               background: '#fff',
               borderRadius: '16px',
               padding: '2rem',
               boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              marginBottom: '1.5rem',
+              position: 'relative',
             }}>
-              <h2 style={{ margin: '0 0 1.5rem 0', fontSize: '1.25rem', fontWeight: 600 }}>Add New Card</h2>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 600 }}>Add New Card</h2>
+                <button
+                  onClick={handleAddCard}
+                  style={{
+                    padding: '0.6rem 1.2rem',
+                    border: 'none',
+                    borderRadius: '8px',
+                    background: '#4CAF50',
+                    color: '#fff',
+                    fontSize: '0.9rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.3rem',
+                  }}
+                >
+                  <span style={{ fontSize: '1.2rem' }}>+</span>
+                  Add Card
+                </button>
+              </div>
               
               <div style={{ marginBottom: '1rem' }}>
                 <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500, fontSize: '0.95rem' }}>
@@ -309,38 +420,22 @@ export const AddDeckPage: React.FC = () => {
                   }}
                 />
               </div>
-
-              <button
-                onClick={handleAddCard}
-                style={{
-                  width: '100%',
-                  padding: '1rem',
-                  border: 'none',
-                  borderRadius: '12px',
-                  background: '#4CAF50',
-                  color: '#fff',
-                  fontSize: '1rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.5rem',
-                }}
-              >
-                <span style={{ fontSize: '1.5rem' }}>+</span>
-                Add Card
-              </button>
             </div>
+          </div>
 
-            {/* Cards in Deck */}
+          {/* Right Column - Cards in Deck (increased height) */}
+          <div>
             <div style={{
               background: '#fff',
               borderRadius: '16px',
               padding: '2rem',
               boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              maxHeight: '400px',
+              height: '100%',
+              minHeight: '700px',
+              maxHeight: '800px',
               overflowY: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
             }}>
               <h2 style={{ margin: '0 0 1rem 0', fontSize: '1.25rem', fontWeight: 600 }}>
                 Cards in Deck ({cardsInDeck.length})

@@ -72,32 +72,35 @@ export const ViewPublicDeckCardsPage: React.FC = () => {
           </>
         ) : (
           <>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-              <h1 className="page-title" style={{ margin: 0 }}>
-                {deck ? deck.name : 'Public Deck Cards'}
-              </h1>
-              <button
-                onClick={() => navigate('/flashcard/browse')}
-                style={{
-                  background: '#666',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 999,
-                  padding: '0.6rem 1rem',
-                  cursor: 'pointer',
-                  fontWeight: 700,
-                }}
-              >
-                Back
-              </button>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '2rem', width: '100%' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '1400px', maxWidth: '100%' }}>
+                <h1 className="page-title" style={{ margin: 0 }}>
+                  {deck ? deck.name : 'Public Deck Cards'}
+                </h1>
+                <button
+                  onClick={() => navigate('/flashcard/browse')}
+                  style={{
+                    background: '#c2185b',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 999,
+                    padding: '0.6rem 1.5rem',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                    fontSize: '0.95rem',
+                  }}
+                >
+                  Back
+                </button>
+              </div>
             </div>
             
             {deck && (
-              <div style={{ marginBottom: '2rem' }}>
-                <p style={{ fontSize: '1.1rem', color: '#666' }}>
+              <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
+                <p style={{ fontSize: '1.1rem', color: '#666', margin: '0 0 0.5rem 0' }}>
                   {deck.description || 'No description'}
                 </p>
-                <p style={{ fontSize: '0.95rem', color: '#999' }}>
+                <p style={{ fontSize: '0.95rem', color: '#999', margin: 0 }}>
                   Total Cards: {deck.flashcard_count}
                 </p>
               </div>
@@ -108,7 +111,7 @@ export const ViewPublicDeckCardsPage: React.FC = () => {
                 No cards in this deck.
               </p>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '800px', margin: '0 auto' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6rem', maxWidth: '1600px', margin: '0 auto' }}>
                 {cards.map((card, index) => {
                   const { back, example } = decodeBackWithExample(card.back);
                   return (
@@ -120,6 +123,8 @@ export const ViewPublicDeckCardsPage: React.FC = () => {
                         padding: '1.5rem',
                         boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                         border: '1px solid #eee',
+                        width: '470px',
+                        height: '320px',
                       }}
                     >
                       <div style={{ marginBottom: '1rem' }}>

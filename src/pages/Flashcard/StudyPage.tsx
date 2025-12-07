@@ -33,6 +33,7 @@ export const StudyPage: React.FC = () => {
   const [dueCardCount, setDueCardCount] = useState(0);
   const [againCards, setAgainCards] = useState<FlashcardResponse[]>([]);
   const [isRetryPhase, setIsRetryPhase] = useState(false);
+  const [modalMessage, setModalMessage] = useState<{ title: string; message: string; type: 'info' | 'error' | 'success' | 'confirm'; onConfirm?: () => void } | null>(null);
 
   useEffect(() => {
     const loadDeck = async () => {
@@ -56,7 +57,7 @@ export const StudyPage: React.FC = () => {
         setDueCardCount(dueCards.flashcards.length);
       } catch (e) {
         console.error('Failed to load deck:', e);
-        alert('Failed to load deck');
+        setModalMessage({ title: 'Error', message: 'Failed to load deck', type: 'error' });
         navigate('/flashcard');
       }
     };
@@ -80,7 +81,7 @@ export const StudyPage: React.FC = () => {
         setAllCards(flashcardsRes.flashcards);
       } catch (e) {
         console.error('Failed to load cards:', e);
-        alert('Failed to load cards');
+        setModalMessage({ title: 'Error', message: 'Failed to load cards', type: 'error' });
       } finally {
         setIsLoading(false);
       }
@@ -95,7 +96,7 @@ export const StudyPage: React.FC = () => {
     } else {
       // FSRS mode - load due cards and start session
       if (dueCardCount === 0) {
-        alert('No cards are due for review at this time!');
+        setModalMessage({ title: 'No Due Cards', message: 'No cards are due for review at this time!', type: 'info' });
         return;
       }
       
@@ -116,7 +117,7 @@ export const StudyPage: React.FC = () => {
         setMode('session');
       } catch (e) {
         console.error('Failed to load due cards:', e);
-        alert('Failed to load due cards');
+        setModalMessage({ title: 'Error', message: 'Failed to load due cards', type: 'error' });
       } finally {
         setIsLoading(false);
       }
@@ -143,7 +144,7 @@ export const StudyPage: React.FC = () => {
 
   const handleResetCards = async () => {
     if (selectedCardIds.size === 0) {
-      alert('Please select at least one card to reset.');
+      setModalMessage({ title: 'No Selection', message: 'Please select at least one card to reset.', type: 'info' });
       return;
     }
 
@@ -176,13 +177,13 @@ export const StudyPage: React.FC = () => {
         await api.bulkResetFlashcards(Number(deckId), {
           card_ids: Array.from(selectedCardIds),
         });
-        alert('Selected cards have been reset successfully!');
+        setModalMessage({ title: 'Success', message: 'Selected cards have been reset successfully!', type: 'success' });
         // Reload cards to reflect changes
         const flashcardsRes = await api.listFlashcards(Number(deckId));
         setAllCards(flashcardsRes.flashcards);
       } catch (e) {
         console.error('Failed to reset cards:', e);
-        alert('Failed to reset cards. Please try again.');
+        setModalMessage({ title: 'Error', message: 'Failed to reset cards. Please try again.', type: 'error' });
       }
     });
     
@@ -195,7 +196,7 @@ export const StudyPage: React.FC = () => {
 
   const handleStartStudy = () => {
     if (selectedCardIds.size === 0) {
-      alert('Please select at least one card to study.');
+      setModalMessage({ title: 'No Selection', message: 'Please select at least one card to study.', type: 'info' });
       return;
     }
 
@@ -254,7 +255,7 @@ export const StudyPage: React.FC = () => {
       }
     } catch (e) {
       console.error('Failed to submit review:', e);
-      alert('Failed to submit review. Please try again.');
+      setModalMessage({ title: 'Error', message: 'Failed to submit review. Please try again.', type: 'error' });
     }
   };
 
@@ -796,6 +797,102 @@ export const StudyPage: React.FC = () => {
           Back to Home
         </button>
       </div>
+
+      {/* Custom Modal Dialog */}
+      {modalMessage && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 2000,
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget && modalMessage.type !== 'confirm') {
+              setModalMessage(null);
+            }
+          }}
+        >
+          <div
+            style={{
+              background: 'white',
+              padding: '2rem',
+              borderRadius: '12px',
+              maxWidth: '400px',
+              textAlign: 'center',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+            }}
+          >
+            <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.25rem', color: '#333' }}>
+              {modalMessage.title}
+            </h3>
+            <p style={{ margin: '0 0 1.5rem 0', color: '#666', lineHeight: '1.5' }}>
+              {modalMessage.message}
+            </p>
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+              {modalMessage.type === 'confirm' ? (
+                <>
+                  <button
+                    onClick={() => setModalMessage(null)}
+                    style={{
+                      padding: '0.75rem 1.5rem',
+                      border: 'none',
+                      borderRadius: '8px',
+                      background: '#9e9e9e',
+                      color: 'white',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (modalMessage.onConfirm) modalMessage.onConfirm();
+                      setModalMessage(null);
+                    }}
+                    style={{
+                      padding: '0.75rem 1.5rem',
+                      border: 'none',
+                      borderRadius: '8px',
+                      background: '#2196F3',
+                      color: 'white',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    OK
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => {
+                    if (modalMessage.onConfirm) modalMessage.onConfirm();
+                    setModalMessage(null);
+                  }}
+                  style={{
+                    padding: '0.75rem 1.5rem',
+                    border: 'none',
+                    borderRadius: '8px',
+                    background: modalMessage.type === 'success' ? '#4CAF50' : modalMessage.type === 'error' ? '#f44336' : '#2196F3',
+                    color: 'white',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  OK
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 };

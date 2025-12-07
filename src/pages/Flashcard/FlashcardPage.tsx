@@ -20,6 +20,7 @@ export const FlashcardPage: React.FC = () => {
   const [selectedDeckIds, setSelectedDeckIds] = useState<Set<number>>(new Set());
   const [cardSelectionMode, setCardSelectionMode] = useState(false);
   const [selectedCardIds, setSelectedCardIds] = useState<Set<number>>(new Set());
+  const [modalMessage, setModalMessage] = useState<{ title: string; message: string; type: 'info' | 'error' | 'success' | 'confirm'; onConfirm?: () => void } | null>(null);
 
   const isLoggedIn = !!firebaseUser;
 
@@ -130,11 +131,11 @@ export const FlashcardPage: React.FC = () => {
 
       // Show result
       if (successCount > 0 && failCount === 0) {
-        alert(`Successfully imported ${successCount} deck(s)!`);
+        setModalMessage({ title: 'Import Successful', message: `Successfully imported ${successCount} deck(s)!`, type: 'success' });
       } else if (successCount > 0 && failCount > 0) {
-        alert(`Imported ${successCount} deck(s) successfully. Failed to import ${failCount} deck(s).`);
+        setModalMessage({ title: 'Partial Import', message: `Imported ${successCount} deck(s) successfully. Failed to import ${failCount} deck(s).`, type: 'info' });
       } else {
-        alert(`Failed to import all ${failCount} deck(s). Please check the CSV format.`);
+        setModalMessage({ title: 'Import Failed', message: `Failed to import all ${failCount} deck(s). Please check the CSV format.`, type: 'error' });
       }
 
       // Reload decks
@@ -162,51 +163,53 @@ export const FlashcardPage: React.FC = () => {
   const renderLoggedInEmpty = () => (
     <>
       <h1 className="page-title" style={{ marginBottom: '1rem' }}>Flashcard</h1>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <h2 style={{ margin: 0 }}>Your Decks</h2>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <button
-            onClick={handleBrowseDecks}
-            style={{
-              background: '#2196F3',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 999,
-              padding: '0.6rem 1rem',
-              cursor: 'pointer',
-              fontWeight: 700,
-            }}
-          >
-            Browse Decks
-          </button>
-          <button
-            onClick={handleImportDecks}
-            style={{
-              background: '#4CAF50',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 999,
-              padding: '0.6rem 1rem',
-              cursor: 'pointer',
-              fontWeight: 700,
-            }}
-          >
-            Import Deck
-          </button>
-          <button
-            onClick={handleCreateDeck}
-            style={{
-              background: '#c2185b',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 999,
-              padding: '0.6rem 1rem',
-              cursor: 'pointer',
-              fontWeight: 700,
-            }}
-          >
-            Create
-          </button>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '1rem', width: '100%' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '1400px', maxWidth: '100%' }}>
+          <h2 style={{ margin: 0 }}>Your Decks</h2>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button
+              onClick={handleBrowseDecks}
+              style={{
+                background: '#2196F3',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 999,
+                padding: '0.6rem 1rem',
+                cursor: 'pointer',
+                fontWeight: 700,
+              }}
+            >
+              Browse Decks
+            </button>
+            <button
+              onClick={handleImportDecks}
+              style={{
+                background: '#4CAF50',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 999,
+                padding: '0.6rem 1rem',
+                cursor: 'pointer',
+                fontWeight: 700,
+              }}
+            >
+              Import Deck
+            </button>
+            <button
+              onClick={handleCreateDeck}
+              style={{
+                background: '#c2185b',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 999,
+                padding: '0.6rem 1rem',
+                cursor: 'pointer',
+                fontWeight: 700,
+              }}
+            >
+              + Create
+            </button>
+          </div>
         </div>
       </div>
       <p style={{ fontSize: '1.05rem' }}>
@@ -242,8 +245,8 @@ export const FlashcardPage: React.FC = () => {
     const progressPercent = deck.flashcard_count === 0 
       ? '-' 
       : dueCount === 0 
-        ? '0' 
-        : Math.min(100, Math.round((dueCount * 100) / deck.flashcard_count)).toString();
+        ? '100' 
+        : Math.max(0, 100 - Math.round((dueCount * 100) / deck.flashcard_count)).toString();
     
     const handleViewDeck = async (e: React.MouseEvent) => {
       e.stopPropagation();
@@ -254,7 +257,7 @@ export const FlashcardPage: React.FC = () => {
         setViewingDeckId(deck.id);
       } catch (e) {
         console.error('Failed to load deck cards:', e);
-        alert('Failed to load deck cards');
+        setModalMessage({ title: 'Error', message: 'Failed to load deck cards', type: 'error' });
       }
     };
 
@@ -279,20 +282,26 @@ export const FlashcardPage: React.FC = () => {
         setShowMenu(false);
       } catch (e) {
         console.error('Failed to export deck:', e);
-        alert('Failed to export deck');
+        setModalMessage({ title: 'Error', message: 'Failed to export deck', type: 'error' });
       }
     };
 
     const handleDeleteDeck = async () => {
-      if (!confirm(`Delete deck "${deck.name}"?`)) return;
-      try {
-        const api = ApiService.getInstance();
-        await api.deleteDeck(deck.id);
-        setDecks((prev) => prev.filter(d => d.id !== deck.id));
-        setShowMenu(false);
-      } catch {
-        alert('Failed to delete deck');
-      }
+      setModalMessage({
+        title: 'Delete Deck',
+        message: `Delete deck "${deck.name}"?`,
+        type: 'confirm',
+        onConfirm: async () => {
+          try {
+            const api = ApiService.getInstance();
+            await api.deleteDeck(deck.id);
+            setDecks((prev) => prev.filter(d => d.id !== deck.id));
+            setShowMenu(false);
+          } catch {
+            setModalMessage({ title: 'Error', message: 'Failed to delete deck', type: 'error' });
+          }
+        }
+      });
     };
 
     const handleMouseDown = () => {
@@ -578,7 +587,7 @@ export const FlashcardPage: React.FC = () => {
                 <button
                   onClick={async () => {
                     if (selectedDeckIds.size === 0) {
-                      alert('Please select at least one deck');
+                      setModalMessage({ title: 'No Selection', message: 'Please select at least one deck', type: 'info' });
                       return;
                     }
                     
@@ -601,7 +610,7 @@ export const FlashcardPage: React.FC = () => {
                         console.error(`Failed to export deck ${deckId}:`, e);
                       }
                     }
-                    alert(`Exported ${selectedDeckIds.size} deck(s)`);
+                    setModalMessage({ title: 'Export Successful', message: `Exported ${selectedDeckIds.size} deck(s)`, type: 'success' });
                   }}
                   style={{
                     background: '#4CAF50',
@@ -618,26 +627,31 @@ export const FlashcardPage: React.FC = () => {
                 <button
                   onClick={async () => {
                     if (selectedDeckIds.size === 0) {
-                      alert('Please select at least one deck');
+                      setModalMessage({ title: 'No Selection', message: 'Please select at least one deck', type: 'info' });
                       return;
                     }
                     
-                    if (!confirm(`Delete ${selectedDeckIds.size} selected deck(s)?`)) return;
-                    
-                    const api = ApiService.getInstance();
-                    for (const deckId of selectedDeckIds) {
-                      try {
-                        await api.deleteDeck(deckId);
-                      } catch (e) {
-                        console.error(`Failed to delete deck ${deckId}:`, e);
+                    setModalMessage({
+                      title: 'Delete Decks',
+                      message: `Delete ${selectedDeckIds.size} selected deck(s)?`,
+                      type: 'confirm',
+                      onConfirm: async () => {
+                        const api = ApiService.getInstance();
+                        for (const deckId of selectedDeckIds) {
+                          try {
+                            await api.deleteDeck(deckId);
+                          } catch (e) {
+                            console.error(`Failed to delete deck ${deckId}:`, e);
+                          }
+                        }
+                        
+                        // Reload decks
+                        const deckRes = await api.listDecks();
+                        setDecks(deckRes.decks ?? []);
+                        setSelectedDeckIds(new Set());
+                        setSelectionMode(false);
                       }
-                    }
-                    
-                    // Reload decks
-                    const deckRes = await api.listDecks();
-                    setDecks(deckRes.decks ?? []);
-                    setSelectedDeckIds(new Set());
-                    setSelectionMode(false);
+                    });
                   }}
                   style={{
                     background: '#f44336',
@@ -653,10 +667,16 @@ export const FlashcardPage: React.FC = () => {
                 </button>
                 <button
                   onClick={() => {
-                    setSelectedDeckIds(new Set(decks.map(d => d.id)));
+                    if (selectedDeckIds.size === decks.length) {
+                      // Deselect all
+                      setSelectedDeckIds(new Set());
+                    } else {
+                      // Select all
+                      setSelectedDeckIds(new Set(decks.map(d => d.id)));
+                    }
                   }}
                   style={{
-                    background: '#2196F3',
+                    background: selectedDeckIds.size === decks.length ? '#FF9800' : '#2196F3',
                     color: '#fff',
                     border: 'none',
                     borderRadius: 999,
@@ -665,7 +685,7 @@ export const FlashcardPage: React.FC = () => {
                     fontWeight: 700,
                   }}
                 >
-                  Select All
+                  {selectedDeckIds.size === decks.length ? 'Deselect All' : 'Select All'}
                 </button>
                 <button
                   onClick={() => {
@@ -716,6 +736,23 @@ export const FlashcardPage: React.FC = () => {
               Import Deck
             </button>
             <button
+              onClick={() => {
+                setSelectionMode(true);
+                setSelectedDeckIds(new Set());
+              }}
+              style={{
+                background: '#9C27B0',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 999,
+                padding: '0.6rem 1rem',
+                cursor: 'pointer',
+                fontWeight: 700,
+              }}
+            >
+              Select Decks
+            </button>
+            <button
               onClick={handleCreateDeck}
               style={{
                 background: '#c2185b',
@@ -755,7 +792,7 @@ export const FlashcardPage: React.FC = () => {
 
     const handleUpdateCard = async () => {
       if (!editingCard || !editFront.trim() || !editBack.trim()) {
-        alert('Both Front and Back are required');
+        setModalMessage({ title: 'Missing Fields', message: 'Both Front and Back are required', type: 'info' });
         return;
       }
 
@@ -774,28 +811,33 @@ export const FlashcardPage: React.FC = () => {
         setEditBack('');
       } catch (e) {
         console.error('Failed to update card:', e);
-        alert('Failed to update card');
+        setModalMessage({ title: 'Error', message: 'Failed to update card', type: 'error' });
       }
     };
 
     const handleDeleteCard = async (cardId: number) => {
-      if (!confirm('Are you sure you want to delete this card?')) return;
-
-      try {
-        const api = ApiService.getInstance();
-        await api.deleteFlashcard(viewingDeckId!, cardId);
-        
-        // Reload cards
-        const cardsRes = await api.listFlashcards(viewingDeckId!);
-        setDeckCards(cardsRes.flashcards);
-        
-        // Reload decks to update counts
-        const deckRes = await api.listDecks();
-        setDecks(deckRes.decks ?? []);
-      } catch (e) {
-        console.error('Failed to delete card:', e);
-        alert('Failed to delete card');
-      }
+      setModalMessage({
+        title: 'Delete Card',
+        message: 'Are you sure you want to delete this card?',
+        type: 'confirm',
+        onConfirm: async () => {
+          try {
+            const api = ApiService.getInstance();
+            await api.deleteFlashcard(viewingDeckId!, cardId);
+            
+            // Reload cards
+            const cardsRes = await api.listFlashcards(viewingDeckId!);
+            setDeckCards(cardsRes.flashcards);
+            
+            // Reload decks to update counts
+            const deckRes = await api.listDecks();
+            setDecks(deckRes.decks ?? []);
+          } catch (e) {
+            console.error('Failed to delete card:', e);
+            setModalMessage({ title: 'Error', message: 'Failed to delete card', type: 'error' });
+          }
+        }
+      });
     };
 
     const CardInfoCard: React.FC<{ card: FlashcardResponse }> = ({ card }) => {
@@ -803,6 +845,17 @@ export const FlashcardPage: React.FC = () => {
       const [pressTimer, setPressTimer] = useState<number | null>(null);
       
       const isSelected = selectedCardIds.has(card.id);
+
+      // Decode back with example
+      const decodeBackWithExample = (encodedBack: string): { back: string; example: string } => {
+        const match = encodedBack.match(/^(.*?)\s*\{(.*?)\}$/);
+        if (match) {
+          return { back: match[1].trim(), example: match[2].trim() };
+        }
+        return { back: encodedBack, example: '' };
+      };
+
+      const { back, example } = decodeBackWithExample(card.back);
 
       const handleMouseDown = () => {
         const timer = setTimeout(() => {
@@ -921,12 +974,32 @@ export const FlashcardPage: React.FC = () => {
               )}
             </div>
           )}
-          <div style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: '0.5rem' }}>
-            {card.front}
+          <div style={{ marginBottom: '1rem' }}>
+            <div style={{ fontSize: '0.9rem', color: '#666', marginBottom: '0.25rem', fontWeight: 600 }}>
+              Front:
+            </div>
+            <div style={{ fontWeight: 700, fontSize: '1.1rem', color: '#333' }}>
+              {card.front}
+            </div>
           </div>
-          <div style={{ color: '#666', fontSize: '0.95rem' }}>
-            {card.back}
+          <div style={{ marginBottom: example ? '1rem' : 0 }}>
+            <div style={{ fontSize: '0.9rem', color: '#666', marginBottom: '0.25rem', fontWeight: 600 }}>
+              Back:
+            </div>
+            <div style={{ fontSize: '1.1rem', color: '#333' }}>
+              {back}
+            </div>
           </div>
+          {example && (
+            <div>
+              <div style={{ fontSize: '0.9rem', color: '#666', marginBottom: '0.25rem', fontWeight: 600 }}>
+                Example:
+              </div>
+              <div style={{ fontSize: '1rem', color: '#555', fontStyle: 'italic' }}>
+                {example}
+              </div>
+            </div>
+          )}
         </div>
       );
     };
@@ -950,25 +1023,31 @@ export const FlashcardPage: React.FC = () => {
         URL.revokeObjectURL(url);
       } catch (e) {
         console.error('Failed to export deck:', e);
-        alert('Failed to export deck');
+        setModalMessage({ title: 'Error', message: 'Failed to export deck', type: 'error' });
       }
     };
 
     const handleDeleteDeckFromView = async () => {
-      if (!confirm(`Delete deck "${currentDeck.name}"?`)) return;
-      try {
-        const api = ApiService.getInstance();
-        await api.deleteDeck(viewingDeckId!);
-        setViewingDeckId(null);
-        setDeckCards([]);
-        
-        // Reload decks
-        const deckRes = await api.listDecks();
-        setDecks(deckRes.decks ?? []);
-      } catch (e) {
-        console.error('Failed to delete deck:', e);
-        alert('Failed to delete deck');
-      }
+      setModalMessage({
+        title: 'Delete Deck',
+        message: `Delete deck "${currentDeck.name}"?`,
+        type: 'confirm',
+        onConfirm: async () => {
+          try {
+            const api = ApiService.getInstance();
+            await api.deleteDeck(viewingDeckId!);
+            setViewingDeckId(null);
+            setDeckCards([]);
+            
+            // Reload decks
+            const deckRes = await api.listDecks();
+            setDecks(deckRes.decks ?? []);
+          } catch (e) {
+            console.error('Failed to delete deck:', e);
+            setModalMessage({ title: 'Error', message: 'Failed to delete deck', type: 'error' });
+          }
+        }
+      });
     };
 
     const handleStudyDeckFromView = () => {
@@ -976,13 +1055,14 @@ export const FlashcardPage: React.FC = () => {
     };
 
     return (
-      <div style={{ maxWidth: '1600px', margin: '0 auto' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-          <h1 className="page-title" style={{ margin: 0 }}>{currentDeck.name}</h1>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            {cardSelectionMode ? (
-              <>
-                <button
+      <div style={{ width: '100%' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '2rem', width: '100%' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '1400px', maxWidth: '100%' }}>
+            <h1 className="page-title" style={{ margin: 0 }}>{currentDeck.name}</h1>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              {cardSelectionMode ? (
+                <>
+                  <button
                   onClick={() => {
                     setSelectedCardIds(new Set(deckCards.map(c => c.id)));
                   }}
@@ -1001,31 +1081,36 @@ export const FlashcardPage: React.FC = () => {
                 <button
                   onClick={async () => {
                     if (selectedCardIds.size === 0) {
-                      alert('Please select at least one card');
+                      setModalMessage({ title: 'No Selection', message: 'Please select at least one card', type: 'info' });
                       return;
                     }
                     
-                    if (!confirm(`Delete ${selectedCardIds.size} selected card(s)?`)) return;
-                    
-                    const api = ApiService.getInstance();
-                    for (const cardId of selectedCardIds) {
-                      try {
-                        await api.deleteFlashcard(viewingDeckId!, cardId);
-                      } catch (e) {
-                        console.error(`Failed to delete card ${cardId}:`, e);
+                    setModalMessage({
+                      title: 'Delete Cards',
+                      message: `Delete ${selectedCardIds.size} selected card(s)?`,
+                      type: 'confirm',
+                      onConfirm: async () => {
+                        const api = ApiService.getInstance();
+                        for (const cardId of selectedCardIds) {
+                          try {
+                            await api.deleteFlashcard(viewingDeckId!, cardId);
+                          } catch (e) {
+                            console.error(`Failed to delete card ${cardId}:`, e);
+                          }
+                        }
+                        
+                        // Reload cards
+                        const cardsRes = await api.listFlashcards(viewingDeckId!);
+                        setDeckCards(cardsRes.flashcards);
+                        
+                        // Reload decks to update counts
+                        const deckRes = await api.listDecks();
+                        setDecks(deckRes.decks ?? []);
+                        
+                        setSelectedCardIds(new Set());
+                        setCardSelectionMode(false);
                       }
-                    }
-                    
-                    // Reload cards
-                    const cardsRes = await api.listFlashcards(viewingDeckId!);
-                    setDeckCards(cardsRes.flashcards);
-                    
-                    // Reload decks to update counts
-                    const deckRes = await api.listDecks();
-                    setDecks(deckRes.decks ?? []);
-                    
-                    setSelectedCardIds(new Set());
-                    setCardSelectionMode(false);
+                    });
                   }}
                   style={{
                     background: '#f44336',
@@ -1136,10 +1221,11 @@ export const FlashcardPage: React.FC = () => {
             </button>
               </>
             )}
+            </div>
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '2rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '2rem', maxWidth: '1600px', margin: '0 auto' }}>
           {deckCards.map(card => (
             <CardInfoCard key={card.id} card={card} />
           ))}
@@ -1272,6 +1358,111 @@ export const FlashcardPage: React.FC = () => {
           renderLoggedInWithDecks()
         )}
       </div>
+
+      {/* Custom Modal Dialog */}
+      {modalMessage && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 2000,
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget && modalMessage.type !== 'confirm') {
+              setModalMessage(null);
+            }
+          }}
+        >
+          <div
+            style={{
+              background: 'white',
+              padding: '2rem',
+              borderRadius: '12px',
+              maxWidth: '400px',
+              textAlign: 'center',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+            }}
+          >
+            <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.25rem', color: '#333' }}>
+              {modalMessage.title}
+            </h3>
+            <p style={{ margin: '0 0 1.5rem 0', color: '#666', lineHeight: '1.5' }}>
+              {modalMessage.message}
+            </p>
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+              {modalMessage.type === 'confirm' ? (
+                <>
+                  <button
+                    onClick={() => setModalMessage(null)}
+                    style={{
+                      padding: '0.75rem 1.5rem',
+                      border: 'none',
+                      borderRadius: '8px',
+                      background: '#9e9e9e',
+                      color: 'white',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      fontSize: '0.95rem',
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (modalMessage.onConfirm) {
+                        modalMessage.onConfirm();
+                      }
+                      setModalMessage(null);
+                    }}
+                    style={{
+                      padding: '0.75rem 1.5rem',
+                      border: 'none',
+                      borderRadius: '8px',
+                      background: '#2196F3',
+                      color: 'white',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      fontSize: '0.95rem',
+                    }}
+                  >
+                    OK
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => {
+                    if (modalMessage.onConfirm) {
+                      modalMessage.onConfirm();
+                    }
+                    setModalMessage(null);
+                  }}
+                  style={{
+                    padding: '0.75rem 1.5rem',
+                    border: 'none',
+                    borderRadius: '8px',
+                    background: 
+                      modalMessage.type === 'success' ? '#4CAF50' :
+                      modalMessage.type === 'error' ? '#f44336' : '#2196F3',
+                    color: 'white',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    fontSize: '0.95rem',
+                  }}
+                >
+                  OK
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 };
