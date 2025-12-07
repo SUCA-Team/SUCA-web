@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import ApiService, { type FlashcardResponse, type FlashcardCreate } from '../../services/apiService';
 
 interface CardInProgress extends FlashcardResponse {
@@ -30,7 +30,10 @@ const decodeBackWithExample = (encodedBack: string): { back: string; example?: s
 
 export const EditDeckPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { deckId } = useParams<{ deckId: string }>();
+  const returnTo = (location.state as any)?.returnTo;
+  const returnDeckId = (location.state as any)?.deckId;
   const [deckName, setDeckName] = useState('');
   const [description, setDescription] = useState('');
   const [isPublic, setIsPublic] = useState(false);
@@ -108,7 +111,11 @@ export const EditDeckPage: React.FC = () => {
       
       document.getElementById('discardBtn')?.addEventListener('click', () => {
         document.body.removeChild(modal);
-        navigate('/flashcard');
+        if (returnTo === 'deckView' && returnDeckId) {
+          navigate('/flashcard', { state: { viewDeckId: returnDeckId } });
+        } else {
+          navigate('/flashcard');
+        }
       });
       
       document.getElementById('saveBtn')?.addEventListener('click', () => {
@@ -122,7 +129,11 @@ export const EditDeckPage: React.FC = () => {
         }
       });
     } else {
-      navigate('/flashcard');
+      if (returnTo === 'deckView' && returnDeckId) {
+        navigate('/flashcard', { state: { viewDeckId: returnDeckId } });
+      } else {
+        navigate('/flashcard');
+      }
     }
   };
 
@@ -320,7 +331,11 @@ export const EditDeckPage: React.FC = () => {
       }
 
       alert(`Deck "${deckName}" updated successfully!`);
-      navigate('/flashcard');
+      if (returnTo === 'deckView' && returnDeckId) {
+        navigate('/flashcard', { state: { viewDeckId: returnDeckId } });
+      } else {
+        navigate('/flashcard');
+      }
     } catch (e) {
       console.error('Failed to update deck:', e);
       alert('Failed to update deck. Please try again.');
@@ -361,17 +376,34 @@ export const EditDeckPage: React.FC = () => {
           </button>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-          {/* Left Column - Deck Information */}
-          <div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', alignItems: 'start' }}>
+          {/* Left Column - Deck Information + Add New Card */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             <div style={{
               background: '#fff',
               borderRadius: '16px',
               padding: '2rem',
               boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              marginBottom: '1.5rem',
             }}>
-              <h2 style={{ margin: '0 0 1.5rem 0', fontSize: '1.25rem', fontWeight: 600 }}>Deck Information</h2>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 600 }}>Deck Information</h2>
+                <button
+                  onClick={handleUpdateDeck}
+                  disabled={!deckName.trim() || isSaving}
+                  style={{
+                    padding: '0.6rem 1.2rem',
+                    border: 'none',
+                    borderRadius: '8px',
+                    background: deckName.trim() ? '#2196F3' : '#ccc',
+                    color: '#fff',
+                    fontSize: '0.9rem',
+                    fontWeight: 700,
+                    cursor: deckName.trim() ? 'pointer' : 'not-allowed',
+                  }}
+                >
+                  {isSaving ? 'Updating...' : 'Update Deck'}
+                </button>
+              </div>
               
               <div style={{ marginBottom: '1.5rem' }}>
                 <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500, fontSize: '0.95rem' }}>
@@ -457,40 +489,19 @@ export const EditDeckPage: React.FC = () => {
               </div>
             </div>
 
-            <button
-              onClick={handleUpdateDeck}
-              disabled={!deckName.trim() || isSaving}
-              style={{
-                width: '100%',
-                padding: '1rem',
-                border: 'none',
-                borderRadius: '12px',
-                background: deckName.trim() ? '#2196F3' : '#ccc',
-                color: '#fff',
-                fontSize: '1rem',
-                fontWeight: 700,
-                cursor: deckName.trim() ? 'pointer' : 'not-allowed',
-              }}
-            >
-              {isSaving ? 'Updating...' : 'Update Deck'}
-            </button>
-          </div>
-
-          {/* Right Column - Add New Card & Cards in Deck */}
-          <div>
+            {/* Add New Card */}
             <div style={{
               background: '#fff',
               borderRadius: '16px',
               padding: '2rem',
               boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              marginBottom: '1.5rem',
               position: 'relative',
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                 <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 600 }}>
                   {editingCardId ? 'Update This Card' : 'Add New Card'}
                 </h2>
-                {editingCardId && (
+                {editingCardId ? (
                   <button
                     onClick={handleCancelEdit}
                     style={{
@@ -511,6 +522,26 @@ export const EditDeckPage: React.FC = () => {
                     onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                   >
                     ✕
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleAddCard}
+                    style={{
+                      padding: '0.6rem 1.2rem',
+                      border: 'none',
+                      borderRadius: '8px',
+                      background: '#4CAF50',
+                      color: '#fff',
+                      fontSize: '0.9rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.3rem',
+                    }}
+                  >
+                    <span style={{ fontSize: '1.2rem' }}>+</span>
+                    Add Card
                   </button>
                 )}
               </div>
@@ -575,43 +606,40 @@ export const EditDeckPage: React.FC = () => {
                 />
               </div>
 
-              <button
-                onClick={editingCardId ? handleUpdateCard : handleAddCard}
-                style={{
-                  width: '100%',
-                  padding: '1rem',
-                  border: 'none',
-                  borderRadius: '12px',
-                  background: editingCardId ? '#2196F3' : '#4CAF50',
-                  color: '#fff',
-                  fontSize: '1rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.5rem',
-                }}
-              >
-                {editingCardId ? (
-                  'Update Card'
-                ) : (
-                  <>
-                    <span style={{ fontSize: '1.5rem' }}>+</span>
-                    Add Card
-                  </>
-                )}
-              </button>
+              {editingCardId && (
+                <button
+                  onClick={handleUpdateCard}
+                  style={{
+                    width: '100%',
+                    padding: '1rem',
+                    border: 'none',
+                    borderRadius: '12px',
+                    background: '#2196F3',
+                    color: '#fff',
+                    fontSize: '1rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Update Card
+                </button>
+              )}
             </div>
+          </div>
 
-            {/* Cards in Deck */}
+          {/* Right Column - Cards in Deck (increased height) */}
+          <div>
             <div style={{
               background: '#fff',
               borderRadius: '16px',
               padding: '2rem',
               boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              maxHeight: '400px',
+              height: '100%',
+              minHeight: '700px',
+              maxHeight: '800px',
               overflowY: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
             }}>
               <h2 style={{ margin: '0 0 1rem 0', fontSize: '1.25rem', fontWeight: 600 }}>
                 Cards in Deck ({visibleCards.length})

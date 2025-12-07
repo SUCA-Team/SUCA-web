@@ -1,12 +1,10 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { NavLink, Link, useLocation, useNavigate } from 'react-router-dom';
 import './Header.css';
-import LoginModal from '../../components/common/LoginModal';
 import useAuth from '../../hooks/useAuth';
 import { signOutUser } from '../../firebase';
 
 export const Header: React.FC = () => {
-  const [open, setOpen] = useState(false);
   const navRef = useRef<HTMLDivElement | null>(null);
   const highlightRef = useRef<HTMLDivElement | null>(null);
   const location = useLocation();
@@ -73,7 +71,7 @@ export const Header: React.FC = () => {
     } catch {
       setSucaUser(null);
     }
-  }, [user, open]);
+  }, [user]);
 
   return (
     <>
@@ -139,13 +137,11 @@ export const Header: React.FC = () => {
                 );
               })()
             ) : (
-              <button className="login-btn" onClick={() => setOpen(true)}>LOG IN</button>
+              <button className="login-btn" onClick={() => navigate('/login')}>LOG IN</button>
             )}
           </div>
         </div>
       </header>
-
-      <LoginModal open={open} onClose={() => setOpen(false)} />
     </>
   );
 };

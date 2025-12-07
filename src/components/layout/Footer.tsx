@@ -14,7 +14,7 @@ export const Footer: React.FC = () => {
 
         <div className="footer-column">
           <h4>FLASHCARD</h4>
-          <Link to="/flashcard" className="footer-link">Set</Link>
+          <Link to="/flashcard" className="footer-link">Decks</Link>
         </div>
 
         <div className="footer-column">

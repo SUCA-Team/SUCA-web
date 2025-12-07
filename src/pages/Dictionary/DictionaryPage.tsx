@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import AudioButtonImg from '../../assets/AudioButton.png';
 // Replace flip button with a simple Copy action
 import AddButtonImg from '../../assets/AddButton.png';
 import { TranslationInput } from '../../components/common/TranslationInput';
@@ -457,9 +456,6 @@ export const DictionaryPage: React.FC = () => {
                             </div>
                             {/* Icon buttons row */}
                             <div style={{ display: 'flex', justifyContent: 'center', gap: '1.2rem', marginBottom: '0.5rem' }}>
-                              <button style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }} title="Play audio">
-                                <img src={AudioButtonImg} alt="Audio" style={{ width: 28, height: 28 }} />
-                              </button>
                               <button
                                 style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
                                 title="Copy"
