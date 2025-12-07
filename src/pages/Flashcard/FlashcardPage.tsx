@@ -1,14 +1,25 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import ApiService, { type DeckResponse } from '../../services/apiService';
+import { useNavigate, useLocation } from 'react-router-dom';
+import ApiService, { type DeckResponse, type DueDeckStats, type FlashcardResponse } from '../../services/apiService';
 import { AuthContext } from '../../context/AuthContext';
 
 export const FlashcardPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user: firebaseUser, loading: authLoading } = useContext(AuthContext);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [decks, setDecks] = useState<DeckResponse[]>([]);
+  const [dueCardsData, setDueCardsData] = useState<{ decks: DueDeckStats[]; total_due: number } | null>(null);
+  const [viewingDeckId, setViewingDeckId] = useState<number | null>(null);
+  const [deckCards, setDeckCards] = useState<FlashcardResponse[]>([]);
+  const [editingCard, setEditingCard] = useState<FlashcardResponse | null>(null);
+  const [editFront, setEditFront] = useState('');
+  const [editBack, setEditBack] = useState('');
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedDeckIds, setSelectedDeckIds] = useState<Set<number>>(new Set());
+  const [cardSelectionMode, setCardSelectionMode] = useState(false);
+  const [selectedCardIds, setSelectedCardIds] = useState<Set<number>>(new Set());
 
   const isLoggedIn = !!firebaseUser;
 
@@ -31,6 +42,14 @@ export const FlashcardPage: React.FC = () => {
         const api = ApiService.getInstance();
         const deckRes = await api.listDecks();
         setDecks(deckRes.decks ?? []);
+        
+        // Load due cards data
+        try {
+          const dueRes = await api.getDueCards();
+          setDueCardsData(dueRes);
+        } catch (e) {
+          console.error('Failed to load due cards:', e);
+        }
       } catch (e) {
         console.error('Failed to load decks:', e);
         setError(e instanceof Error ? e.message : 'Failed to load decks');
@@ -45,6 +64,27 @@ export const FlashcardPage: React.FC = () => {
       loadDecks();
     }
   }, [firebaseUser, authLoading]);
+
+  // Handle returning from EditDeckPage with deck view state
+  useEffect(() => {
+    const state = location.state as { viewDeckId?: number } | undefined;
+    if (state?.viewDeckId && decks.length > 0) {
+      const deckId = state.viewDeckId;
+      const loadDeckView = async () => {
+        try {
+          const api = ApiService.getInstance();
+          const cardsRes = await api.listFlashcards(deckId);
+          setDeckCards(cardsRes.flashcards);
+          setViewingDeckId(deckId);
+          // Clear the state
+          navigate(location.pathname, { replace: true, state: {} });
+        } catch (e) {
+          console.error('Failed to load deck cards:', e);
+        }
+      };
+      loadDeckView();
+    }
+  }, [location.state, decks, navigate, location.pathname]);
 
   const handleCreateDeck = () => {
     if (!isLoggedIn) return;
@@ -192,6 +232,31 @@ export const FlashcardPage: React.FC = () => {
 
   const DeckCard: React.FC<{ deck: DeckResponse }> = ({ deck }) => {
     const [showMenu, setShowMenu] = useState(false);
+    const [isHovered, setIsHovered] = useState(false);
+    const [pressTimer, setPressTimer] = useState<number | null>(null);
+    
+    const isSelected = selectedDeckIds.has(deck.id);
+    
+    const deckDueData = dueCardsData?.decks.find(d => d.deck_id === deck.id);
+    const dueCount = deckDueData?.due_cards ?? 0;
+    const progressPercent = deck.flashcard_count === 0 
+      ? '-' 
+      : dueCount === 0 
+        ? '0' 
+        : Math.min(100, Math.round((dueCount * 100) / deck.flashcard_count)).toString();
+    
+    const handleViewDeck = async (e: React.MouseEvent) => {
+      e.stopPropagation();
+      try {
+        const api = ApiService.getInstance();
+        const cardsRes = await api.listFlashcards(deck.id);
+        setDeckCards(cardsRes.flashcards);
+        setViewingDeckId(deck.id);
+      } catch (e) {
+        console.error('Failed to load deck cards:', e);
+        alert('Failed to load deck cards');
+      }
+    };
 
     const handleEditDeck = () => {
       navigate(`/flashcard/edit/${deck.id}`);
@@ -230,22 +295,101 @@ export const FlashcardPage: React.FC = () => {
       }
     };
 
+    const handleMouseDown = () => {
+      const timer = setTimeout(() => {
+        setSelectionMode(true);
+        setSelectedDeckIds(new Set([deck.id]));
+      }, 500); // 500ms long press
+      setPressTimer(timer);
+    };
+
+    const handleMouseUp = () => {
+      if (pressTimer) {
+        clearTimeout(pressTimer);
+        setPressTimer(null);
+      }
+    };
+
+    const handleClick = (e: React.MouseEvent) => {
+      if (selectionMode) {
+        e.stopPropagation();
+        const newSelected = new Set(selectedDeckIds);
+        if (newSelected.has(deck.id)) {
+          newSelected.delete(deck.id);
+        } else {
+          newSelected.add(deck.id);
+        }
+        setSelectedDeckIds(newSelected);
+      }
+    };
+
     return (
-      <div style={{
-        width: '400px',
-        height: '400px',
-        borderRadius: '16px',
-        background: '#fff',
-        boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
-        overflow: 'hidden',
-        border: '1px solid #eee',
-        position: 'relative',
-        display: 'flex',
-        flexDirection: 'column',
-      }}>
+      <div 
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => { setIsHovered(false); handleMouseUp(); }}
+        onMouseDown={handleMouseDown}
+        onMouseUp={handleMouseUp}
+        onClick={handleClick}
+        style={{
+          width: '400px',
+          height: '400px',
+          borderRadius: '16px',
+          background: '#fff',
+          boxShadow: isSelected ? '0 8px 24px rgba(188,0,45,0.3)' : isHovered ? '0 12px 32px rgba(0,0,0,0.16)' : '0 4px 16px rgba(0,0,0,0.08)',
+          overflow: 'hidden',
+          border: isSelected ? '3px solid #BC002D' : '1px solid #eee',
+          position: 'relative',
+          display: 'flex',
+          flexDirection: 'column',
+          transform: isHovered || selectionMode ? 'scale(1.05) translateY(-8px)' : 'scale(1) translateY(0)',
+          transition: 'all 0.3s ease',
+          cursor: 'pointer',
+        }}>
         <div style={{ background: '#BC002D', height: '150px', position: 'relative' }}>
+          {(isHovered || selectionMode) && (
+            <div
+              onClick={(e) => {
+                e.stopPropagation();
+                if (selectionMode) {
+                  handleClick(e);
+                } else {
+                  handleViewDeck(e);
+                }
+              }}
+              style={{
+                position: 'absolute',
+                top: '10px',
+                left: '10px',
+                background: 'rgba(255,255,255,0.9)',
+                border: isSelected ? '2px solid #BC002D' : 'none',
+                cursor: 'pointer',
+                padding: '8px',
+                borderRadius: selectionMode ? '4px' : '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '28px',
+                height: '28px',
+              }}
+            >
+              {selectionMode ? (
+                isSelected ? (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="#BC002D" stroke="#BC002D" strokeWidth="3">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                ) : (
+                  <div style={{ width: '16px', height: '16px', border: '2px solid #666', borderRadius: '2px' }} />
+                )
+              ) : (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#BC002D" strokeWidth="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              )}
+            </div>
+          )}
           <button
-            onClick={() => setShowMenu(!showMenu)}
+            onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
             style={{
               position: 'absolute',
               top: '10px',
@@ -374,12 +518,21 @@ export const FlashcardPage: React.FC = () => {
             fontSize: '0.9rem', 
             marginBottom: '0.75rem',
             display: 'flex',
-            alignItems: 'flex-end',
-            gap: '6px',
-            justifyContent: 'center',
+            flexDirection: 'column',
+            gap: '8px',
+            alignItems: 'center',
           }}>
-            <img src="/src/assets/CardCountIcon.png" alt="Cards" style={{ width: '16px', height: '16px' }} />
-            {deck.flashcard_count} cards
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <img src="/src/assets/CardCountIcon.png" alt="Cards" style={{ width: '16px', height: '16px' }} />
+              {deck.flashcard_count} cards
+              <span style={{ margin: '0 4px', color: '#ccc' }}>|</span>
+              <img src="/src/assets/DueCardIcon.png" alt="Due" style={{ width: '16px', height: '16px' }} />
+              {dueCount} due
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <img src="/src/assets/ProgressIcon.png" alt="Progress" style={{ width: '16px', height: '16px' }} />
+              {progressPercent}{progressPercent !== '-' ? '%' : ''} progress
+            </div>
           </div>
         </div>
         <div style={{ width: '340px', height: '50px' , marginBottom: '30px', marginLeft: 'auto', marginRight: 'auto' }}>
@@ -410,8 +563,130 @@ export const FlashcardPage: React.FC = () => {
       {/* Top cards (metrics) intentionally omitted as per request */}
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '1rem', width: '100%' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '1400px', maxWidth: '100%' }}>
-          <h2 style={{ margin: 0 }}>Your Decks</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <h2 style={{ margin: 0 }}>Your Decks</h2>
+            {dueCardsData && (
+              <div style={{ fontSize: '0.95rem', color: '#666', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <img src="/src/assets/DueCardIcon.png" alt="Due" style={{ width: '18px', height: '18px' }} />
+                <span style={{ fontWeight: 600 }}>{dueCardsData.total_due}</span> cards due for review
+              </div>
+            )}
+          </div>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
+            {selectionMode ? (
+              <>
+                <button
+                  onClick={async () => {
+                    if (selectedDeckIds.size === 0) {
+                      alert('Please select at least one deck');
+                      return;
+                    }
+                    
+                    const api = ApiService.getInstance();
+                    for (const deckId of selectedDeckIds) {
+                      try {
+                        const deck = decks.find(d => d.id === deckId);
+                        if (!deck) continue;
+                        
+                        const blob = await api.exportDeckToCSV(deckId);
+                        const url = URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = `${deck.name}.csv`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        URL.revokeObjectURL(url);
+                      } catch (e) {
+                        console.error(`Failed to export deck ${deckId}:`, e);
+                      }
+                    }
+                    alert(`Exported ${selectedDeckIds.size} deck(s)`);
+                  }}
+                  style={{
+                    background: '#4CAF50',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 999,
+                    padding: '0.6rem 1rem',
+                    cursor: 'pointer',
+                    fontWeight: 700,
+                  }}
+                >
+                  Download All ({selectedDeckIds.size})
+                </button>
+                <button
+                  onClick={async () => {
+                    if (selectedDeckIds.size === 0) {
+                      alert('Please select at least one deck');
+                      return;
+                    }
+                    
+                    if (!confirm(`Delete ${selectedDeckIds.size} selected deck(s)?`)) return;
+                    
+                    const api = ApiService.getInstance();
+                    for (const deckId of selectedDeckIds) {
+                      try {
+                        await api.deleteDeck(deckId);
+                      } catch (e) {
+                        console.error(`Failed to delete deck ${deckId}:`, e);
+                      }
+                    }
+                    
+                    // Reload decks
+                    const deckRes = await api.listDecks();
+                    setDecks(deckRes.decks ?? []);
+                    setSelectedDeckIds(new Set());
+                    setSelectionMode(false);
+                  }}
+                  style={{
+                    background: '#f44336',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 999,
+                    padding: '0.6rem 1rem',
+                    cursor: 'pointer',
+                    fontWeight: 700,
+                  }}
+                >
+                  Delete All ({selectedDeckIds.size})
+                </button>
+                <button
+                  onClick={() => {
+                    setSelectedDeckIds(new Set(decks.map(d => d.id)));
+                  }}
+                  style={{
+                    background: '#2196F3',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 999,
+                    padding: '0.6rem 1rem',
+                    cursor: 'pointer',
+                    fontWeight: 700,
+                  }}
+                >
+                  Select All
+                </button>
+                <button
+                  onClick={() => {
+                    setSelectionMode(false);
+                    setSelectedDeckIds(new Set());
+                  }}
+                  style={{
+                    background: '#757575',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 999,
+                    padding: '0.6rem 1rem',
+                    cursor: 'pointer',
+                    fontWeight: 700,
+                  }}
+                >
+                  Cancel
+                </button>
+              </>
+            ) : (
+              <>
             <button
               onClick={handleBrowseDecks}
               style={{
@@ -454,6 +729,8 @@ export const FlashcardPage: React.FC = () => {
             >
               + Create
             </button>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -465,6 +742,519 @@ export const FlashcardPage: React.FC = () => {
     </>
   );
 
+  // Deck detail view with card editing
+  const renderDeckDetailView = () => {
+    const currentDeck = decks.find(d => d.id === viewingDeckId);
+    if (!currentDeck) return null;
+
+    const handleEditCardClick = (card: FlashcardResponse) => {
+      setEditingCard(card);
+      setEditFront(card.front);
+      setEditBack(card.back);
+    };
+
+    const handleUpdateCard = async () => {
+      if (!editingCard || !editFront.trim() || !editBack.trim()) {
+        alert('Both Front and Back are required');
+        return;
+      }
+
+      try {
+        const api = ApiService.getInstance();
+        await api.updateFlashcard(viewingDeckId!, editingCard.id, {
+          front: editFront.trim(),
+          back: editBack.trim(),
+        });
+        
+        // Reload cards
+        const cardsRes = await api.listFlashcards(viewingDeckId!);
+        setDeckCards(cardsRes.flashcards);
+        setEditingCard(null);
+        setEditFront('');
+        setEditBack('');
+      } catch (e) {
+        console.error('Failed to update card:', e);
+        alert('Failed to update card');
+      }
+    };
+
+    const handleDeleteCard = async (cardId: number) => {
+      if (!confirm('Are you sure you want to delete this card?')) return;
+
+      try {
+        const api = ApiService.getInstance();
+        await api.deleteFlashcard(viewingDeckId!, cardId);
+        
+        // Reload cards
+        const cardsRes = await api.listFlashcards(viewingDeckId!);
+        setDeckCards(cardsRes.flashcards);
+        
+        // Reload decks to update counts
+        const deckRes = await api.listDecks();
+        setDecks(deckRes.decks ?? []);
+      } catch (e) {
+        console.error('Failed to delete card:', e);
+        alert('Failed to delete card');
+      }
+    };
+
+    const CardInfoCard: React.FC<{ card: FlashcardResponse }> = ({ card }) => {
+      const [isHovered, setIsHovered] = useState(false);
+      const [pressTimer, setPressTimer] = useState<number | null>(null);
+      
+      const isSelected = selectedCardIds.has(card.id);
+
+      const handleMouseDown = () => {
+        const timer = setTimeout(() => {
+          setCardSelectionMode(true);
+          setSelectedCardIds(new Set([card.id]));
+        }, 500); // 500ms long press
+        setPressTimer(timer);
+      };
+
+      const handleMouseUp = () => {
+        if (pressTimer) {
+          clearTimeout(pressTimer);
+          setPressTimer(null);
+        }
+      };
+
+      const handleClick = (e: React.MouseEvent) => {
+        if (cardSelectionMode) {
+          e.stopPropagation();
+          const newSelected = new Set(selectedCardIds);
+          if (newSelected.has(card.id)) {
+            newSelected.delete(card.id);
+          } else {
+            newSelected.add(card.id);
+          }
+          setSelectedCardIds(newSelected);
+        }
+      };
+
+      return (
+        <div
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => { setIsHovered(false); handleMouseUp(); }}
+          onMouseDown={handleMouseDown}
+          onMouseUp={handleMouseUp}
+          onClick={handleClick}
+          style={{
+            background: '#fff',
+            borderRadius: '12px',
+            padding: '1.5rem',
+            boxShadow: isSelected ? '0 4px 16px rgba(188,0,45,0.3)' : '0 2px 8px rgba(0,0,0,0.1)',
+            border: isSelected ? '2px solid #BC002D' : '1px solid transparent',
+            position: 'relative',
+            minHeight: '150px',
+            display: 'flex',
+            flexDirection: 'column',
+            transition: 'all 0.2s ease',
+            transform: isHovered || cardSelectionMode ? 'scale(1.02)' : 'scale(1)',
+            cursor: cardSelectionMode ? 'pointer' : 'default',
+          }}
+        >
+          {(isHovered || cardSelectionMode) && !cardSelectionMode && (
+            <div style={{
+              position: 'absolute',
+              top: '1rem',
+              right: '1rem',
+              display: 'flex',
+              gap: '0.5rem',
+              zIndex: 1,
+            }}>
+              <button
+                onClick={() => handleEditCardClick(card)}
+                style={{
+                  background: '#e3f2fd',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '0.5rem 0.75rem',
+                  color: '#1976d2',
+                  cursor: 'pointer',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                }}
+              >
+                Edit Card
+              </button>
+              <button
+                onClick={() => handleDeleteCard(card.id)}
+                style={{
+                  background: '#ffebee',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '0.5rem 0.75rem',
+                  color: '#d32f2f',
+                  cursor: 'pointer',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                }}
+              >
+                Delete Card
+              </button>
+            </div>
+          )}
+          {cardSelectionMode && (
+            <div
+              style={{
+                position: 'absolute',
+                top: '1rem',
+                left: '1rem',
+                background: 'rgba(255,255,255,0.9)',
+                border: isSelected ? '2px solid #BC002D' : 'none',
+                padding: '6px',
+                borderRadius: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '20px',
+                height: '20px',
+              }}
+            >
+              {isSelected ? (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="#BC002D" stroke="#BC002D" strokeWidth="3">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              ) : (
+                <div style={{ width: '14px', height: '14px', border: '2px solid #666', borderRadius: '2px' }} />
+              )}
+            </div>
+          )}
+          <div style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+            {card.front}
+          </div>
+          <div style={{ color: '#666', fontSize: '0.95rem' }}>
+            {card.back}
+          </div>
+        </div>
+      );
+    };
+
+    const handleEditDeckFromView = () => {
+      navigate(`/flashcard/edit/${viewingDeckId}`, { state: { returnTo: 'deckView', deckId: viewingDeckId } });
+    };
+
+    const handleDownloadDeckFromView = async () => {
+      try {
+        const api = ApiService.getInstance();
+        const blob = await api.exportDeckToCSV(viewingDeckId!);
+        
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${currentDeck.name}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        console.error('Failed to export deck:', e);
+        alert('Failed to export deck');
+      }
+    };
+
+    const handleDeleteDeckFromView = async () => {
+      if (!confirm(`Delete deck "${currentDeck.name}"?`)) return;
+      try {
+        const api = ApiService.getInstance();
+        await api.deleteDeck(viewingDeckId!);
+        setViewingDeckId(null);
+        setDeckCards([]);
+        
+        // Reload decks
+        const deckRes = await api.listDecks();
+        setDecks(deckRes.decks ?? []);
+      } catch (e) {
+        console.error('Failed to delete deck:', e);
+        alert('Failed to delete deck');
+      }
+    };
+
+    const handleStudyDeckFromView = () => {
+      navigate(`/flashcard/study/${viewingDeckId}`);
+    };
+
+    return (
+      <div style={{ maxWidth: '1600px', margin: '0 auto' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+          <h1 className="page-title" style={{ margin: 0 }}>{currentDeck.name}</h1>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            {cardSelectionMode ? (
+              <>
+                <button
+                  onClick={() => {
+                    setSelectedCardIds(new Set(deckCards.map(c => c.id)));
+                  }}
+                  style={{
+                    background: '#2196F3',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '999px',
+                    padding: '0.6rem 1rem',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                  }}
+                >
+                  Select All
+                </button>
+                <button
+                  onClick={async () => {
+                    if (selectedCardIds.size === 0) {
+                      alert('Please select at least one card');
+                      return;
+                    }
+                    
+                    if (!confirm(`Delete ${selectedCardIds.size} selected card(s)?`)) return;
+                    
+                    const api = ApiService.getInstance();
+                    for (const cardId of selectedCardIds) {
+                      try {
+                        await api.deleteFlashcard(viewingDeckId!, cardId);
+                      } catch (e) {
+                        console.error(`Failed to delete card ${cardId}:`, e);
+                      }
+                    }
+                    
+                    // Reload cards
+                    const cardsRes = await api.listFlashcards(viewingDeckId!);
+                    setDeckCards(cardsRes.flashcards);
+                    
+                    // Reload decks to update counts
+                    const deckRes = await api.listDecks();
+                    setDecks(deckRes.decks ?? []);
+                    
+                    setSelectedCardIds(new Set());
+                    setCardSelectionMode(false);
+                  }}
+                  style={{
+                    background: '#f44336',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '999px',
+                    padding: '0.6rem 1rem',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                  }}
+                >
+                  Delete All ({selectedCardIds.size})
+                </button>
+                <button
+                  onClick={() => {
+                    setCardSelectionMode(false);
+                    setSelectedCardIds(new Set());
+                  }}
+                  style={{
+                    background: '#757575',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '999px',
+                    padding: '0.6rem 1rem',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                  }}
+                >
+                  Cancel
+                </button>
+              </>
+            ) : (
+              <>
+            <button
+              onClick={handleEditDeckFromView}
+              style={{
+                background: '#2196F3',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '999px',
+                padding: '0.6rem 1rem',
+                cursor: 'pointer',
+                fontWeight: 600,
+              }}
+            >
+              Edit Deck
+            </button>
+            <button
+              onClick={handleDownloadDeckFromView}
+              style={{
+                background: '#4CAF50',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '999px',
+                padding: '0.6rem 1rem',
+                cursor: 'pointer',
+                fontWeight: 600,
+              }}
+            >
+              Download Deck
+            </button>
+            <button
+              onClick={handleDeleteDeckFromView}
+              style={{
+                background: '#f44336',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '999px',
+                padding: '0.6rem 1rem',
+                cursor: 'pointer',
+                fontWeight: 600,
+              }}
+            >
+              Delete Deck
+            </button>
+            <button
+              onClick={handleStudyDeckFromView}
+              style={{
+                background: '#BC002D',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '999px',
+                padding: '0.6rem 1rem',
+                cursor: 'pointer',
+                fontWeight: 600,
+              }}
+            >
+              Study
+            </button>
+            <button
+              onClick={() => {
+                setViewingDeckId(null);
+                setDeckCards([]);
+                setCardSelectionMode(false);
+                setSelectedCardIds(new Set());
+              }}
+              style={{
+                background: '#757575',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '999px',
+                padding: '0.6rem 1.5rem',
+                cursor: 'pointer',
+                fontWeight: 600,
+              }}
+            >
+              ← Back
+            </button>
+              </>
+            )}
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '2rem' }}>
+          {deckCards.map(card => (
+            <CardInfoCard key={card.id} card={card} />
+          ))}
+        </div>
+
+        {/* Edit Card Overlay */}
+        {editingCard && (
+          <div
+            onClick={() => {
+              setEditingCard(null);
+              setEditFront('');
+              setEditBack('');
+            }}
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'rgba(0,0,0,0.5)',
+              backdropFilter: 'blur(4px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000,
+            }}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                background: '#fff',
+                borderRadius: '16px',
+                padding: '2rem',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+                width: '500px',
+                maxWidth: '90vw',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 600 }}>Update This Card</h2>
+                <button
+                  onClick={() => {
+                    setEditingCard(null);
+                    setEditFront('');
+                    setEditBack('');
+                  }}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: '1.5rem',
+                    color: '#666',
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Front (Question)</label>
+                <input
+                  type="text"
+                  value={editFront}
+                  onChange={(e) => setEditFront(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    border: '1px solid #ddd',
+                    borderRadius: '8px',
+                    fontSize: '0.95rem',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Back (Answer)</label>
+                <input
+                  type="text"
+                  value={editBack}
+                  onChange={(e) => setEditBack(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    border: '1px solid #ddd',
+                    borderRadius: '8px',
+                    fontSize: '0.95rem',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+
+              <button
+                onClick={handleUpdateCard}
+                style={{
+                  width: '100%',
+                  padding: '1rem',
+                  border: 'none',
+                  borderRadius: '12px',
+                  background: '#2196F3',
+                  color: '#fff',
+                  fontSize: '1rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                Update Card
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <main className="page page-flashcard">
       <div className="page-content">
@@ -474,6 +1264,8 @@ export const FlashcardPage: React.FC = () => {
           <div style={{ padding: '1rem', color: 'red' }}>Error: {error}</div>
         ) : !isLoggedIn ? (
           renderLoggedOut()
+        ) : viewingDeckId ? (
+          renderDeckDetailView()
         ) : decks.length === 0 ? (
           renderLoggedInEmpty()
         ) : (
