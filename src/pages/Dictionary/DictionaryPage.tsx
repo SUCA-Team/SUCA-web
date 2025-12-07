@@ -24,6 +24,7 @@ export const DictionaryPage: React.FC = () => {
   const [isLoadingDecks, setIsLoadingDecks] = useState(false);
   const [newDeckName, setNewDeckName] = useState('');
   const [newDeckDescription, setNewDeckDescription] = useState('');
+  const [modalMessage, setModalMessage] = useState<{ title: string; message: string; type: 'info' | 'error' | 'success' | 'confirm'; onConfirm?: () => void } | null>(null);
 
   const fetchResults = async (text: string, pageNum: number, posFilter: SearchPos | null) => {
     if (!text.trim()) return;
@@ -97,7 +98,7 @@ export const DictionaryPage: React.FC = () => {
       setUserDecks(decksRes.decks || []);
     } catch (error) {
       console.error('Failed to load decks:', error);
-      alert('Failed to load decks. Please try again.');
+      setModalMessage({ title: 'Error', message: 'Failed to load decks. Please try again.', type: 'error' });
     } finally {
       setIsLoadingDecks(false);
     }
@@ -149,11 +150,11 @@ export const DictionaryPage: React.FC = () => {
 
   const handleCreateDeckAndCard = async () => {
     if (!newDeckName.trim()) {
-      alert('Please enter a deck name.');
+      setModalMessage({ title: 'Missing Deck Name', message: 'Please enter a deck name.', type: 'info' });
       return;
     }
     if (!cardFront.trim() || !cardBack.trim()) {
-      alert('Please fill in at least the front and back of the card.');
+      setModalMessage({ title: 'Missing Fields', message: 'Please fill in at least the front and back of the card.', type: 'info' });
       return;
     }
 
@@ -176,11 +177,15 @@ export const DictionaryPage: React.FC = () => {
         back: encodedBack,
       });
       
-      alert(`Deck "${newDeck.name}" created successfully with 1 card!`);
-      resetOverlayState();
+      setModalMessage({ 
+        title: 'Deck Created Successfully', 
+        message: `Deck "${newDeck.name}" created successfully with 1 card!`, 
+        type: 'success',
+        onConfirm: () => resetOverlayState()
+      });
     } catch (error) {
       console.error('Failed to create deck and card:', error);
-      alert('Failed to create deck and card. Please try again.');
+      setModalMessage({ title: 'Error', message: 'Failed to create deck and card. Please try again.', type: 'error' });
     }
   };
 
@@ -190,9 +195,12 @@ export const DictionaryPage: React.FC = () => {
       (overlayView === 'create-deck' && (newDeckName.trim() || newDeckDescription.trim() || cardFront.trim() || cardBack.trim() || cardExample.trim()));
     
     if (hasChanges) {
-      if (confirm('You have unsaved changes. Do you want to discard them?')) {
-        resetOverlayState();
-      }
+      setModalMessage({
+        title: 'Unsaved Changes',
+        message: 'You have unsaved changes. Do you want to discard them?',
+        type: 'confirm',
+        onConfirm: () => resetOverlayState()
+      });
     } else {
       resetOverlayState();
     }
@@ -212,7 +220,7 @@ export const DictionaryPage: React.FC = () => {
 
   const handleAddCard = async () => {
     if (!selectedDeckId || !cardFront.trim() || !cardBack.trim()) {
-      alert('Please fill in at least the front and back of the card.');
+      setModalMessage({ title: 'Missing Fields', message: 'Please fill in at least the front and back of the card.', type: 'info' });
       return;
     }
 
@@ -228,11 +236,15 @@ export const DictionaryPage: React.FC = () => {
         back: encodedBack.trim(),
       });
       
-      alert('Card added successfully!');
-      resetOverlayState();
+      setModalMessage({
+        title: 'Card Added Successfully',
+        message: 'Card added successfully!',
+        type: 'success',
+        onConfirm: () => resetOverlayState()
+      });
     } catch (error) {
       console.error('Failed to add card:', error);
-      alert('Failed to add card. Please try again.');
+      setModalMessage({ title: 'Error', message: 'Failed to add card. Please try again.', type: 'error' });
     }
   };
 
@@ -275,9 +287,6 @@ export const DictionaryPage: React.FC = () => {
           )}
           {searchResults && searchResults.success && (
             <div style={{ marginTop: '1.5rem' }}>
-              <div style={{ marginBottom: '1rem', padding: '0.5rem', background: '#e8f5e8', borderRadius: '4px', color: '#2e7d32', width: '50%', marginLeft: 'auto', marginRight: 'auto', textAlign: 'center' }}>
-                {searchResults.message}
-              </div>
               <h3>
                 {searchResults.total_count} {searchResults.total_count === 1 ? 'result' : 'results'} found for '{searchResults.query}'
               </h3>
@@ -1048,6 +1057,111 @@ export const DictionaryPage: React.FC = () => {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Custom Modal Dialog */}
+      {modalMessage && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 2000,
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget && modalMessage.type !== 'confirm') {
+              setModalMessage(null);
+            }
+          }}
+        >
+          <div
+            style={{
+              background: 'white',
+              padding: '2rem',
+              borderRadius: '12px',
+              maxWidth: '400px',
+              textAlign: 'center',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+            }}
+          >
+            <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.25rem', color: '#333' }}>
+              {modalMessage.title}
+            </h3>
+            <p style={{ margin: '0 0 1.5rem 0', color: '#666', lineHeight: '1.5' }}>
+              {modalMessage.message}
+            </p>
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+              {modalMessage.type === 'confirm' ? (
+                <>
+                  <button
+                    onClick={() => setModalMessage(null)}
+                    style={{
+                      padding: '0.75rem 1.5rem',
+                      border: 'none',
+                      borderRadius: '8px',
+                      background: '#9e9e9e',
+                      color: 'white',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      fontSize: '0.95rem',
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (modalMessage.onConfirm) {
+                        modalMessage.onConfirm();
+                      }
+                      setModalMessage(null);
+                    }}
+                    style={{
+                      padding: '0.75rem 1.5rem',
+                      border: 'none',
+                      borderRadius: '8px',
+                      background: '#2196F3',
+                      color: 'white',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      fontSize: '0.95rem',
+                    }}
+                  >
+                    OK
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => {
+                    if (modalMessage.onConfirm) {
+                      modalMessage.onConfirm();
+                    }
+                    setModalMessage(null);
+                  }}
+                  style={{
+                    padding: '0.75rem 1.5rem',
+                    border: 'none',
+                    borderRadius: '8px',
+                    background: 
+                      modalMessage.type === 'success' ? '#4CAF50' :
+                      modalMessage.type === 'error' ? '#f44336' : '#2196F3',
+                    color: 'white',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    fontSize: '0.95rem',
+                  }}
+                >
+                  OK
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}

@@ -9,6 +9,7 @@ export const BrowsePublicDecksPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [publicDecks, setPublicDecks] = useState<DeckResponse[]>([]);
+  const [modalMessage, setModalMessage] = useState<{ title: string; message: string; type: 'info' | 'error' | 'success' | 'confirm'; onConfirm?: () => void } | null>(null);
 
   const isLoggedIn = !!firebaseUser;
 
@@ -49,11 +50,11 @@ export const BrowsePublicDecksPage: React.FC = () => {
       try {
         const api = ApiService.getInstance();
         await api.copyDeck(deck.id);
-        alert(`"${deck.name}" has been added to your collection!`);
+        setModalMessage({ title: 'Success', message: `"${deck.name}" has been added to your collection!`, type: 'success' });
         setShowMenu(false);
       } catch (e) {
         console.error('Failed to add deck to collection:', e);
-        alert('Failed to add deck to collection');
+        setModalMessage({ title: 'Error', message: 'Failed to add deck to collection', type: 'error' });
       }
     };
 
@@ -81,7 +82,7 @@ export const BrowsePublicDecksPage: React.FC = () => {
               position: 'absolute',
               top: '10px',
               right: '10px',
-              background: 'rgba(255, 255, 255, 0.9)',
+              background: '#BC002D',
               border: 'none',
               borderRadius: '50%',
               width: '36px',
@@ -90,9 +91,9 @@ export const BrowsePublicDecksPage: React.FC = () => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '1.2rem',
+              fontSize: '2rem',
               fontWeight: 'bold',
-              color: '#333',
+              color: '#000000ff',
             }}
           >
             ⋮
@@ -186,7 +187,7 @@ export const BrowsePublicDecksPage: React.FC = () => {
                 <button
                   onClick={() => navigate('/flashcard')}
                   style={{
-                    background: '#666',
+                    background: '#BC002D',
                     color: '#fff',
                     border: 'none',
                     borderRadius: 999,
@@ -213,6 +214,99 @@ export const BrowsePublicDecksPage: React.FC = () => {
           </>
         )}
       </div>
+
+      {/* Custom Modal Dialog */}
+      {modalMessage && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 2000,
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget && modalMessage.type !== 'confirm') {
+              setModalMessage(null);
+            }
+          }}
+        >
+          <div
+            style={{
+              background: 'white',
+              padding: '2rem',
+              borderRadius: '12px',
+              maxWidth: '400px',
+              textAlign: 'center',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+            }}
+          >
+            <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.25rem', color: '#333' }}>
+              {modalMessage.title}
+            </h3>
+            <p style={{ margin: '0 0 1.5rem 0', color: '#666', lineHeight: '1.5' }}>
+              {modalMessage.message}
+            </p>
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+              {modalMessage.type === 'confirm' ? (
+                <>
+                  <button
+                    onClick={() => setModalMessage(null)}
+                    style={{
+                      padding: '0.75rem 1.5rem',
+                      border: 'none',
+                      borderRadius: '8px',
+                      background: '#9e9e9e',
+                      color: 'white',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (modalMessage.onConfirm) modalMessage.onConfirm();
+                      setModalMessage(null);
+                    }}
+                    style={{
+                      padding: '0.75rem 1.5rem',
+                      border: 'none',
+                      borderRadius: '8px',
+                      background: '#2196F3',
+                      color: 'white',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    OK
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setModalMessage(null)}
+                  style={{
+                    padding: '0.75rem 1.5rem',
+                    border: 'none',
+                    borderRadius: '8px',
+                    background: modalMessage.type === 'success' ? '#4CAF50' : modalMessage.type === 'error' ? '#f44336' : '#2196F3',
+                    color: 'white',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  OK
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 };
