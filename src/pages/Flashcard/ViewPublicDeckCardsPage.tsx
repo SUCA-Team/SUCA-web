@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { AuthContext } from '../../context/AuthContext';
+import { AuthContext } from '../../context/AuthContextValue';
 import ApiService, { type FlashcardResponse, type DeckResponse } from '../../services/apiService';
 
 export const ViewPublicDeckCardsPage: React.FC = () => {

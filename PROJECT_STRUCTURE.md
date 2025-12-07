@@ -1,120 +1,230 @@
-# SUCA App - Project Structure Guide
+# SUCA Project Structure
 
-This guide explains the file organization for the SUCA Japanese language learning application.
+This document outlines the organization of the SUCA web application codebase.
 
-## 📁 Project Structure
+## Root Directory
 
 ```
-src/
-├── components/           # Reusable UI components
-│   ├── common/          # Generic components
-│   │   └── TranslationInput.tsx  # Main translation/search input with suggestions
-│   ├── layout/          # Layout components
-│   │   └── Header.tsx   # App header with navigation and theme toggle
-│   └── AppRouter.tsx    # Main routing component
-├── pages/               # Page components (route-level)
-│   ├── Home/
-│   │   ├── HomePage.tsx # Main landing page
-│   │   └── HomePage.css
-│   ├── About/
-│   │   └── AboutPage.tsx
-│   └── Features/
-│       └── FeaturesPage.tsx
-├── hooks/               # Custom React hooks
-│   ├── useTheme.ts     # Theme management hook
-│   └── useWordSuggestions.ts  # Word recommendation hook
-├── context/             # React Context providers
-│   └── ThemeContext.tsx # Light/dark theme context
-├── services/            # API calls and business logic
-│   └── wordRecommendationService.ts  # Word suggestion service
-├── types/               # TypeScript type definitions
-│   ├── theme.ts        # Theme-related types
-│   └── translation.ts  # Translation and word types
-├── styles/              # Global styles and themes
-│   └── theme.css       # CSS variables for light/dark themes
-├── assets/              # Static assets
-│   └── react.svg
-├── utils/               # Utility functions (future)
-└── index.ts            # Export barrel file
+SUCA-web/
+├── src/                    # Source code
+├── public/                 # Static assets
+├── dist/                   # Build output
+├── node_modules/           # Dependencies
+├── .env                    # Environment variables (local)
+├── .env.example            # Environment variables template
+├── index.html              # Entry HTML file
+├── package.json            # Dependencies and scripts
+├── vite.config.ts          # Vite configuration
+├── vitest.config.ts        # Vitest test configuration
+├── tsconfig.json           # TypeScript base config
+├── tsconfig.app.json       # TypeScript app config
+├── tsconfig.node.json      # TypeScript Node config
+├── eslint.config.js        # ESLint configuration
+├── README.md               # Project documentation
+├── TESTING.md              # Test coverage documentation
+└── SETUP_SUMMARY.md        # Setup notes
 ```
 
-## 🎨 Features Implemented
+## Source Code Structure (`src/`)
 
-### Theme System
-- **Light/Dark Mode**: Automatic system preference detection
-- **Theme Toggle**: Button in header to switch themes
-- **Persistent Preferences**: Saves theme choice to localStorage
-- **CSS Variables**: Centralized theming with CSS custom properties
+### Application Entry Point
+- `main.tsx` - React application entry point, renders App component
+- `App.tsx` - Root component with theme provider
+- `App.css` - Global application styles
+- `index.css` - Base CSS styles
+- `firebase.ts` - Firebase initialization and authentication utilities
 
-### Word Recommendations
-- **Real-time Suggestions**: As-you-type word recommendations
-- **Multiple Search Types**: Supports hiragana, katakana, kanji, and romaji
-- **JLPT Level Indicators**: Shows difficulty levels (N5-N1)
-- **Smart Filtering**: Searches across word, reading, and meaning
-- **Responsive Dropdown**: Clean suggestion interface
+### Components (`src/components/`)
 
-### Navigation
-- **React Router**: Client-side routing for SPA experience
-- **Responsive Header**: Works on desktop and mobile
-- **Clean URLs**: Proper route structure for different pages
+#### Router
+- `AppRouter.tsx` - React Router configuration with all application routes
 
-### UI Components
-- **Translation Input**: Dual-mode (translate/search) with suggestions
-- **Hero Section**: Eye-catching landing page design
-- **Feature Cards**: Preview of app capabilities
-- **Responsive Design**: Mobile-first approach
+#### Common Components (`src/components/common/`)
+- `LoginModal.tsx` / `LoginModal.css` - Login modal dialog
+- `TranslationInput.tsx` / `TranslationInput.css` - Input field with word suggestions
 
-## 🚀 Getting Started
+#### Layout Components (`src/components/layout/`)
+- `Header.tsx` / `Header.css` - Navigation header with logo and menu
+- `Footer.tsx` / `Footer.css` - Site footer with links and copyright
 
-1. **Development Server**:
-   ```bash
-   npm run dev
-   ```
+### Pages (`src/pages/`)
 
-2. **Build for Production**:
-   ```bash
-   npm run build
-   ```
+Each page is organized in its own directory with related components and styles.
 
-3. **Preview Production Build**:
-   ```bash
-   npm run preview
-   ```
+#### Home (`src/pages/Home/`)
+- `HomePage.tsx` / `HomePage.css` - Landing page
 
-## 🛠 Technology Stack
+#### About (`src/pages/About/`)
+- `AboutPage.tsx` - About SUCA page
 
-- **React 19** - UI library
-- **TypeScript** - Type safety
-- **Vite** - Build tool and dev server
-- **React Router** - Client-side routing
-- **CSS Variables** - Theming system
-- **ESLint** - Code linting
+#### Features (`src/pages/Features/`)
+- `FeaturesPage.tsx` - Features overview page
 
-## 📱 Responsive Design
+#### Dictionary (`src/pages/Dictionary/`)
+- `DictionaryPage.tsx` - JMdict dictionary search with word lookup, examples, and deck integration
 
-The application is designed mobile-first with breakpoints:
-- **Mobile**: < 768px
-- **Tablet**: 768px - 1024px  
-- **Desktop**: > 1024px
+#### Flashcard (`src/pages/Flashcard/`)
+- `FlashcardPage.tsx` - Deck management dashboard
+- `AddDeckPage.tsx` - Create new deck
+- `EditDeckPage.tsx` - Edit existing deck
+- `StudyPage.tsx` - FSRS-based flashcard study session
+- `BrowsePublicDecksPage.tsx` - Browse public decks
+- `ViewPublicDeckCardsPage.tsx` - View cards in a public deck
 
-## 🎯 Future Enhancements
+#### Login (`src/pages/Login/`)
+- `LoginPage.tsx` - Login page (redirects to Google sign-in)
 
-Based on this structure, you can easily add:
+#### Contact (`src/pages/Contact/`)
+- Contact form page (Firestore-backed with rate limiting)
 
-1. **Authentication Pages**: `src/pages/Auth/`
-2. **Dashboard**: `src/pages/Dashboard/`
-3. **Lessons**: `src/pages/Lessons/`
-4. **Profile**: `src/pages/Profile/`
-5. **API Integration**: `src/services/api.ts`
-6. **State Management**: `src/store/` (Redux/Zustand)
-7. **Testing**: `src/__tests__/`
-8. **Utilities**: `src/utils/`
+#### Data Source (`src/pages/DataSource/`)
+- `DataSourcePage.tsx` - JMdict attribution and licensing information
 
-## 🏗 Architecture Benefits
+#### Help (`src/pages/Help/`)
+- Help and documentation page
 
-- **Scalable**: Easy to add new features and pages
-- **Maintainable**: Clear separation of concerns
-- **Reusable**: Components can be shared across pages
-- **Type-Safe**: Full TypeScript coverage
-- **Performance**: Tree-shaking and code splitting ready
-- **Developer Experience**: Clear file organization and imports
+#### Terms (`src/pages/Terms/`)
+- Terms of service page
+
+#### Profile Test (`src/pages/ProfileTest/`)
+- User profile testing page
+
+### Configuration (`src/config/`)
+- `api.ts` - API base URL configuration
+
+### Context (`src/context/`)
+- `AuthContext.tsx` - Authentication context provider
+- `authContextValue.ts` - Authentication context value types
+- `ThemeContext.tsx` - Theme (light/dark mode) context provider
+
+### Hooks (`src/hooks/`)
+- `useAuth.ts` - Authentication hook
+- `useTheme.ts` - Theme management hook
+- `useTranslation.ts` - Translation functionality hook
+- `useWordSuggestions.ts` - Word suggestion hook for input fields
+
+### Services (`src/services/`)
+- `apiService.ts` - Axios-based API client with Firebase token injection
+- `wordRecommendationService.ts` - Word suggestion service (N5-N1 vocabulary)
+
+### Types (`src/types/`)
+- `theme.ts` - Theme-related TypeScript types
+- `translation.ts` - Translation and word suggestion types
+
+### Utilities (`src/utils/`)
+- `romajiToKana.ts` - Romaji to hiragana conversion utility
+
+### Styles (`src/styles/`)
+- `theme.css` - Theme variables and global theme styles
+
+### Assets (`src/assets/`)
+- Static assets (images, icons, etc.)
+
+### Tests (`src/test/`)
+- `romajiToKana.test.ts` - Tests for romaji conversion (15 tests)
+- `wordRecommendationService.test.ts` - Tests for word suggestions (13 tests)
+- `Header.test.tsx` - Tests for Header component (3 tests)
+- `Footer.test.tsx` - Tests for Footer component (4 tests)
+- `useAuth.test.tsx` - Tests for authentication hook (2 tests)
+- `contactRateLimiting.test.ts` - Tests for contact rate limiting (6 tests)
+- `setup.ts` - Vitest test setup with jsdom and cleanup
+
+## Key Technologies
+
+### Frontend Stack
+- **React 19.1.1** - UI library
+- **TypeScript 5.9.3** - Type safety
+- **Vite 7.1.7** - Build tool and dev server
+- **React Router 7.9.3** - Client-side routing
+
+### Backend Integration
+- **Axios 1.12.2** - HTTP client for backend API
+- **Firebase 12.4.0** - Authentication, Firestore, Analytics
+
+### Testing & Quality
+- **Vitest 4.0.15** - Test framework
+- **React Testing Library 16.1.0** - Component testing
+- **ESLint 9.36.0** - Code linting
+
+### Features & Libraries
+- **FSRS** - Spaced repetition algorithm for flashcards
+- **JMdict** - Japanese dictionary data (180,000+ entries)
+
+## Data Flow
+
+### Authentication Flow
+1. User clicks Google sign-in → Firebase Authentication
+2. `AuthContext` provides user state throughout app
+3. `apiService` injects Firebase token in API requests
+
+### Dictionary Flow
+1. User searches → `DictionaryPage` calls `apiService.search()`
+2. Backend queries JMdict data → returns results
+3. User can add words to decks → `apiService.addCardToDeck()`
+
+### Flashcard Flow
+1. User creates deck → `apiService.createDeck()`
+2. User studies → `StudyPage` fetches due cards
+3. User reviews cards → FSRS algorithm calculates next review
+4. `apiService.reviewCard()` updates card state
+
+### Word Suggestions Flow
+1. User types in `TranslationInput`
+2. `useWordSuggestions` hook filters `WordRecommendationService` vocabulary
+3. Suggestions displayed based on input type (hiragana/katakana/kanji/romaji/English)
+
+## Environment Variables
+
+Required in `.env`:
+- `VITE_FIREBASE_API_KEY` - Firebase API key
+- `VITE_FIREBASE_AUTH_DOMAIN` - Firebase auth domain
+- `VITE_FIREBASE_DATABASE_URL` - Firebase database URL
+- `VITE_FIREBASE_PROJECT_ID` - Firebase project ID
+- `VITE_FIREBASE_STORAGE_BUCKET` - Firebase storage bucket
+- `VITE_FIREBASE_MESSAGING_SENDER_ID` - Firebase messaging sender ID
+- `VITE_FIREBASE_APP_ID` - Firebase app ID
+- `VITE_FIREBASE_MEASUREMENT_ID` - Firebase measurement ID
+- `VITE_API_BASE_URL` - Backend API URL (default: `http://localhost:8000/api`)
+
+## Build & Development
+
+### Development
+```bash
+npm run dev          # Start dev server (default: http://localhost:5173)
+```
+
+### Production Build
+```bash
+npm run build        # Build for production (outputs to dist/)
+npm run preview      # Preview production build
+```
+
+### Testing
+```bash
+npm test             # Run all tests
+npm run test:watch   # Run tests in watch mode
+```
+
+### Linting
+```bash
+npm run lint         # Run ESLint
+```
+
+## Routing Structure
+
+- `/` - Home page
+- `/about` - About page
+- `/features` - Features overview
+- `/dictionary` - Dictionary search
+- `/flashcard` - Deck management
+- `/flashcard/add` - Create new deck
+- `/flashcard/edit/:deckId` - Edit deck
+- `/flashcard/study/:deckId` - Study session
+- `/flashcard/browse` - Browse public decks
+- `/flashcard/public/:deckId/cards` - View public deck cards
+- `/login` - Login page
+- `/contact` - Contact form
+- `/datasource` - Data attribution
+- `/help` - Help documentation
+- `/terms` - Terms of service
+- `/profile-test` - Profile testing

@@ -15,8 +15,8 @@ export const DictionaryPage: React.FC = () => {
   const [showMoreExamplesIdx, setShowMoreExamplesIdx] = useState<number | null>(null);
   const [showAddToDeckOverlay, setShowAddToDeckOverlay] = useState(false);
   const [overlayView, setOverlayView] = useState<'deck-select' | 'add-card' | 'create-deck'>('deck-select');
-  const [selectedWord, setSelectedWord] = useState<any>(null);
-  const [userDecks, setUserDecks] = useState<any[]>([]);
+  const [selectedWord, setSelectedWord] = useState<SearchResponse['results'][number] | null>(null);
+  const [userDecks, setUserDecks] = useState<Array<{ id: number; name: string; flashcard_count: number }>>([]);
   const [selectedDeckId, setSelectedDeckId] = useState<number | null>(null);
   const [cardFront, setCardFront] = useState('');
   const [cardBack, setCardBack] = useState('');
@@ -84,7 +84,7 @@ export const DictionaryPage: React.FC = () => {
     }
   }, [page, showMoreExamplesIdx]);
 
-  const handleAddToDeckClick = async (result: any) => {
+  const handleAddToDeckClick = async (result: SearchResponse['results'][number]) => {
     setSelectedWord(result);
     setShowAddToDeckOverlay(true);
     setOverlayView('deck-select');
@@ -900,7 +900,7 @@ export const DictionaryPage: React.FC = () => {
                   </div>
 
                   {/* Meanings */}
-                  {selectedWord.meanings?.map((meaning: any, idx: number) => (
+                  {selectedWord.meanings?.map((meaning, idx: number) => (
                     <div key={idx} style={{ marginBottom: '1rem' }}>
                       <div style={{ color: '#666', fontSize: '0.9rem', marginBottom: '0.25rem' }}>
                         <strong>Part of speech:</strong> {meaning.pos?.join(', ') || 'N/A'}
@@ -917,7 +917,7 @@ export const DictionaryPage: React.FC = () => {
                         <div>
                           <strong>Examples:</strong>
                           <ul style={{ margin: '0.25rem 0', paddingLeft: '1.5rem' }}>
-                            {meaning.examples.map((ex: any, exIdx: number) => (
+                            {meaning.examples.map((ex, exIdx: number) => (
                               <li key={exIdx} style={{ marginBottom: '0.25rem' }}>
                                 <div>{ex.japanese}</div>
                                 <div style={{ color: '#888', fontSize: '0.9rem', fontStyle: 'italic' }}>{ex.english}</div>
@@ -1017,7 +1017,7 @@ export const DictionaryPage: React.FC = () => {
                   </div>
 
                   {/* Meanings */}
-                  {selectedWord.meanings?.map((meaning: any, idx: number) => (
+                  {selectedWord.meanings?.map((meaning, idx: number) => (
                     <div key={idx} style={{ marginBottom: '1rem' }}>
                       <div style={{ color: '#666', fontSize: '0.9rem', marginBottom: '0.25rem' }}>
                         <strong>Part of speech:</strong> {meaning.pos?.join(', ') || 'N/A'}
@@ -1034,7 +1034,7 @@ export const DictionaryPage: React.FC = () => {
                         <div>
                           <strong>Examples:</strong>
                           <ul style={{ margin: '0.25rem 0', paddingLeft: '1.5rem' }}>
-                            {meaning.examples.map((ex: any, exIdx: number) => (
+                            {meaning.examples.map((ex, exIdx: number) => (
                               <li key={exIdx} style={{ marginBottom: '0.25rem' }}>
                                 <div>{ex.japanese}</div>
                                 <div style={{ color: '#888', fontSize: '0.9rem', fontStyle: 'italic' }}>{ex.english}</div>
