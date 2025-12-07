@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, sendEmailVerification, sendPasswordResetEmail } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 // Import the functions you need from the SDKs you need
@@ -18,11 +18,6 @@ const firebaseConfig = {
   messagingSenderId: "842887867822",
   appId: "1:842887867822:web:b65d3ec81379d1eed4ac3f"
 };
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-// initialize analytics if available; don't keep an unused binding to avoid build errors
-void getAnalytics(app);
 
 // Validate that required environment variables are present
 const requiredEnvVars = {
@@ -47,7 +42,11 @@ let googleProvider: GoogleAuthProvider | null = null;
 let db: ReturnType<typeof getFirestore> | null = null;
 
 if (isConfigured) {
+  // Initialize Firebase app
   const app = initializeApp(firebaseConfig);
+  // Initialize analytics
+  void getAnalytics(app);
+  // Initialize auth services
   auth = getAuth(app);
   googleProvider = new GoogleAuthProvider();
   db = getFirestore(app);
@@ -64,6 +63,20 @@ export async function signInWithGooglePopup() {
 export async function signOutUser() {
   if (!auth) return;
   await signOut(auth);
+}
+
+export async function sendVerificationEmail() {
+  if (!auth?.currentUser) {
+    throw new Error('No user is currently signed in.');
+  }
+  await sendEmailVerification(auth.currentUser);
+}
+
+export async function sendPasswordReset(email: string) {
+  if (!auth) {
+    throw new Error('Firebase is not configured.');
+  }
+  await sendPasswordResetEmail(auth, email);
 }
 
 export { auth, db };

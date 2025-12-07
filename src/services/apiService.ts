@@ -181,12 +181,6 @@ export interface HealthResponse {
   status: string;
 }
 
-export interface AuthTokenResponse {
-  access_token: string;
-  token_type: string; // typically "bearer"
-  expires_in: number; // seconds
-}
-
 export interface SearchSuggestionsResponse {
   suggestions: string[];
 }
@@ -207,15 +201,6 @@ class ApiService {
     // Request interceptor
     this.client.interceptors.request.use(
       async (config) => {
-        // Skip adding token only for register and login endpoints
-        const publicAuthEndpoints = ['/v1/auth/verify', '/v1/auth/refresh'];
-        const isPublicAuth = publicAuthEndpoints.some(endpoint => config.url === endpoint);
-        
-        if (isPublicAuth) {
-          console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`);
-          return config;
-        }
-
         // Get Firebase ID token if user is authenticated
         if (auth?.currentUser) {
           try {
@@ -301,29 +286,20 @@ class ApiService {
     return response.data.suggestions ?? [];
   }
 
-  // Authentication - register (sign up)
-  async registerUser(username: string, email: string, password: string): Promise<AuthTokenResponse> {
-    // Backend expects JSON body: { username, email, password }
-    const response = await this.client.post<AuthTokenResponse>('/v1/auth/register', {
-      username,
-      email,
-      password,
-    });
-    return response.data;
-  }
-
-  // Authentication - login
-  async loginUser(username: string, password: string): Promise<AuthTokenResponse> {
-    // Backend expects JSON body: { username, password }
-    const response = await this.client.post<AuthTokenResponse>('/v1/auth/login', {
-      username,
-      password,
-    });
-    return response.data;
-  }
-
   // Authentication - get current user info
-  async getCurrentUser(): Promise<{ user_id: string; username: string; email: string }> {
+  async getCurrentUser(): Promise<{ user_id: string; username: string; email: string; display_name?: string | null; photo_url?: string | null; email_verified?: boolean }> {
+    // If Firebase user is available, use that data first
+    if (auth?.currentUser) {
+      return {
+        user_id: auth.currentUser.uid,
+        username: auth.currentUser.displayName || auth.currentUser.email?.split('@')[0] || 'User',
+        email: auth.currentUser.email || '',
+        display_name: auth.currentUser.displayName,
+        photo_url: auth.currentUser.photoURL,
+        email_verified: auth.currentUser.emailVerified
+      };
+    }
+    // Fallback to backend API if no Firebase user
     const response = await this.client.get('/v1/auth/me');
     return response.data;
   }
