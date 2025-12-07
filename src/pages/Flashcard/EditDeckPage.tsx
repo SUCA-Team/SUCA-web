@@ -32,8 +32,8 @@ export const EditDeckPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { deckId } = useParams<{ deckId: string }>();
-  const returnTo = (location.state as any)?.returnTo;
-  const returnDeckId = (location.state as any)?.deckId;
+  const returnTo = (location.state as { returnTo?: string })?.returnTo;
+  const returnDeckId = (location.state as { deckId?: number })?.deckId;
   const [deckName, setDeckName] = useState('');
   const [description, setDescription] = useState('');
   const [isPublic, setIsPublic] = useState(false);

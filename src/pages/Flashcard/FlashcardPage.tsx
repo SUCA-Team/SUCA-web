@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import ApiService, { type DeckResponse, type DueDeckStats, type FlashcardResponse } from '../../services/apiService';
-import { AuthContext } from '../../context/AuthContext';
+import { AuthContext } from '../../context/AuthContextValue';
 
 export const FlashcardPage: React.FC = () => {
   const navigate = useNavigate();

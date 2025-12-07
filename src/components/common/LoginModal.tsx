@@ -57,9 +57,9 @@ export const LoginModal: React.FC<Props> = ({ open, onClose }) => {
       
       console.log(context === 'login' ? 'Signed in user:' : 'Signed up user:', res.user);
       onClose();
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Common Firebase error when user closes popup: auth/popup-closed-by-user
-      const code = err?.code || err?.error?.code;
+      const code = (err as { code?: string; error?: { code?: string } })?.code || (err as { error?: { code?: string } })?.error?.code;
       if (code === 'auth/popup-closed-by-user') {
         // Silently ignore; user simply cancelled
         console.warn('Google auth popup closed by user');
