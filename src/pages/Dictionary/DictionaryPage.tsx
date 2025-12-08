@@ -98,7 +98,7 @@ export const DictionaryPage: React.FC = () => {
       setUserDecks(decksRes.decks || []);
     } catch (error) {
       console.error('Failed to load decks:', error);
-      setModalMessage({ title: 'Error', message: 'Failed to load decks. Please try again.', type: 'error' });
+      setModalMessage({ title: 'Error', message: 'You need to log in first to add card.', type: 'error' });
     } finally {
       setIsLoadingDecks(false);
     }

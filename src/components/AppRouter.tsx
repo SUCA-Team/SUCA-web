@@ -17,7 +17,7 @@ import TermsPage from '../pages/Terms/TermsPage';
 import ContactPage from '../pages/Contact/ContactPage';
 import DataSourcePage from '../pages/DataSource/DataSourcePage';
 import Footer from '../components/layout/Footer';
-
+import MultiplayerPage from '../pages/Multiplayer/MultiplayerPage';
 export const AppRouter: React.FC = () => {
   return (
     <Router>
@@ -28,7 +28,7 @@ export const AppRouter: React.FC = () => {
           <Route path="/about" element={<AboutPage />} />
           <Route path="/features" element={<FeaturesPage />} />
           <Route path="/dictionary" element={<DictionaryPage />} />
-          {/** Translate page removed */}
+          <Route path="/multiplayer" element={<MultiplayerPage />} />
           <Route path="/flashcard" element={<FlashcardPage />} />
           <Route path="/flashcard/add" element={<AddDeckPage />} />
           <Route path="/flashcard/edit/:deckId" element={<EditDeckPage />} />

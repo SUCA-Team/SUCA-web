@@ -95,6 +95,10 @@ export const Header: React.FC = () => {
               <span className="label dark">FLASHCARD</span>
               <span className="label light">FLASHCARD</span>
             </NavLink>
+            <NavLink to="/multiplayer" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
+              <span className="label dark">MULTIPLAYER</span>
+              <span className="label light">MULTIPLAYER</span>
+            </NavLink>
           </nav>
 
           <div className="right">
