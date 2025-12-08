@@ -57,7 +57,7 @@ export const StudyPage: React.FC = () => {
         setDueCardCount(dueCards.flashcards.length);
       } catch (e) {
         console.error('Failed to load deck:', e);
-        setModalMessage({ title: 'Error', message: 'Failed to load deck', type: 'error' });
+        setModalMessage({ title: 'Message', message: 'Failed to load deck', type: 'error' });
         navigate('/flashcard');
       }
     };
@@ -81,7 +81,7 @@ export const StudyPage: React.FC = () => {
         setAllCards(flashcardsRes.flashcards);
       } catch (e) {
         console.error('Failed to load cards:', e);
-        setModalMessage({ title: 'Error', message: 'Failed to load cards', type: 'error' });
+        setModalMessage({ title: 'Message', message: 'Failed to load cards', type: 'error' });
       } finally {
         setIsLoading(false);
       }
@@ -117,7 +117,7 @@ export const StudyPage: React.FC = () => {
         setMode('session');
       } catch (e) {
         console.error('Failed to load due cards:', e);
-        setModalMessage({ title: 'Error', message: 'Failed to load due cards', type: 'error' });
+        setModalMessage({ title: 'Message', message: 'Failed to load due cards', type: 'error' });
       } finally {
         setIsLoading(false);
       }
@@ -183,7 +183,7 @@ export const StudyPage: React.FC = () => {
         setAllCards(flashcardsRes.flashcards);
       } catch (e) {
         console.error('Failed to reset cards:', e);
-        setModalMessage({ title: 'Error', message: 'Failed to reset cards. Please try again.', type: 'error' });
+        setModalMessage({ title: 'Message', message: 'Failed to reset cards. Please try again.', type: 'error' });
       }
     });
     
@@ -255,7 +255,7 @@ export const StudyPage: React.FC = () => {
       }
     } catch (e) {
       console.error('Failed to submit review:', e);
-      setModalMessage({ title: 'Error', message: 'Failed to submit review. Please try again.', type: 'error' });
+      setModalMessage({ title: 'Message', message: 'Failed to submit review. Please try again.', type: 'error' });
     }
   };
 

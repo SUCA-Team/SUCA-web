@@ -80,7 +80,7 @@ export const EditDeckPage: React.FC = () => {
         }));
       } catch (e) {
         console.error('Failed to load deck:', e);
-        setModalMessage({ title: 'Error', message: 'Failed to load deck', type: 'error' });
+        setModalMessage({ title: 'Message', message: 'Failed to load deck', type: 'error' });
         navigate('/flashcard');
       } finally {
         setIsLoading(false);
@@ -345,7 +345,7 @@ export const EditDeckPage: React.FC = () => {
       });
     } catch (e) {
       console.error('Failed to update deck:', e);
-      setModalMessage({ title: 'Error', message: 'Failed to update deck. Please try again.', type: 'error' });
+      setModalMessage({ title: 'Message', message: 'Failed to update deck. Please try again.', type: 'error' });
     } finally {
       setIsSaving(false);
     }

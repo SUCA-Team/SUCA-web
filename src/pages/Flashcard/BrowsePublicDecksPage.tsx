@@ -54,7 +54,7 @@ export const BrowsePublicDecksPage: React.FC = () => {
         setShowMenu(false);
       } catch (e) {
         console.error('Failed to add deck to collection:', e);
-        setModalMessage({ title: 'Error', message: 'Failed to add deck to collection', type: 'error' });
+        setModalMessage({ title: 'Message', message: 'Failed to add deck to collection', type: 'error' });
       }
     };
 

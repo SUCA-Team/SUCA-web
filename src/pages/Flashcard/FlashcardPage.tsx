@@ -257,7 +257,7 @@ export const FlashcardPage: React.FC = () => {
         setViewingDeckId(deck.id);
       } catch (e) {
         console.error('Failed to load deck cards:', e);
-        setModalMessage({ title: 'Error', message: 'Failed to load deck cards', type: 'error' });
+        setModalMessage({ title: 'Message', message: 'Failed to load deck cards', type: 'error' });
       }
     };
 
@@ -282,7 +282,7 @@ export const FlashcardPage: React.FC = () => {
         setShowMenu(false);
       } catch (e) {
         console.error('Failed to export deck:', e);
-        setModalMessage({ title: 'Error', message: 'Failed to export deck', type: 'error' });
+        setModalMessage({ title: 'Message', message: 'Failed to export deck', type: 'error' });
       }
     };
 
@@ -298,7 +298,7 @@ export const FlashcardPage: React.FC = () => {
             setDecks((prev) => prev.filter(d => d.id !== deck.id));
             setShowMenu(false);
           } catch {
-            setModalMessage({ title: 'Error', message: 'Failed to delete deck', type: 'error' });
+            setModalMessage({ title: 'Message', message: 'Failed to delete deck', type: 'error' });
           }
         }
       });
@@ -811,7 +811,7 @@ export const FlashcardPage: React.FC = () => {
         setEditBack('');
       } catch (e) {
         console.error('Failed to update card:', e);
-        setModalMessage({ title: 'Error', message: 'Failed to update card', type: 'error' });
+        setModalMessage({ title: 'Message', message: 'Failed to update card', type: 'error' });
       }
     };
 
@@ -834,7 +834,7 @@ export const FlashcardPage: React.FC = () => {
             setDecks(deckRes.decks ?? []);
           } catch (e) {
             console.error('Failed to delete card:', e);
-            setModalMessage({ title: 'Error', message: 'Failed to delete card', type: 'error' });
+            setModalMessage({ title: 'Message', message: 'Failed to delete card', type: 'error' });
           }
         }
       });
@@ -1023,7 +1023,7 @@ export const FlashcardPage: React.FC = () => {
         URL.revokeObjectURL(url);
       } catch (e) {
         console.error('Failed to export deck:', e);
-        setModalMessage({ title: 'Error', message: 'Failed to export deck', type: 'error' });
+        setModalMessage({ title: 'Message', message: 'Failed to export deck', type: 'error' });
       }
     };
 
@@ -1044,7 +1044,7 @@ export const FlashcardPage: React.FC = () => {
             setDecks(deckRes.decks ?? []);
           } catch (e) {
             console.error('Failed to delete deck:', e);
-            setModalMessage({ title: 'Error', message: 'Failed to delete deck', type: 'error' });
+            setModalMessage({ title: 'Message', message: 'Failed to delete deck', type: 'error' });
           }
         }
       });
